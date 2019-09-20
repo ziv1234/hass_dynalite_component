@@ -1,0 +1,101 @@
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Uncomment this if you are using SSL/TLS, running in Docker container, etc.
+# http:
+#   base_url: example.duckdns.org:8123
+
+# Text to speech
+# tts:
+  # - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+
+# hacs:
+    # token: 36935147a197055c12576acfe9f9f950f825ad87
+
+logger:
+  default: info
+  logs:
+    custom_components.dynalite: debug
+    #homeassistant.components.climate: debug
+    homeassistant.components.kodi: debug
+
+dynalite:
+  bridges:
+    - host: 10.0.0.200
+      port: 95
+      autodiscover: true
+      area:
+        '9':
+          name: Office
+          channel:
+            '1': 
+              name: Center
+            '2': 
+              name: East
+            '3': 
+              name: West
+        '10':
+          name: Cinema
+          channel:
+            '1':
+              type: hidden
+            '3':
+        '108':
+          name: AAA
+          nodefault: true
+          channel:
+            '2':
+              name: Blind
+              type: cover
+              factor: 0.73
+      preset:
+        '1':
+          name: 'On'
+          fade: 0
+        '4':
+          name: 'Off'
+          fade: 0
+      default:
+        fade: 0
+
+# media_player:
+  # - platform: kodi
+    # host: 10.0.0.13
+    
+heos:
+  host: 10.0.0.221
+  
+# climate:
+  # - platform: coolmaster
+    # host: 10.0.0.20
+    # port: 10102
+    # supported_modes:
+      # - heat
+      # - cool
+      
+# panel_custom:
+  # - name: floorplan
+    # sidebar_title: Floorplan
+    # sidebar_icon: mdi:home
+    # url_path: floorplan
+    # config: !include floorplan.yaml
+    
+# frontend:
+  # extra_html_url:
+    # - /local/custom_ui/state-card-floorplan.html
+    
+# binary_sensor:
+  # - platform: mqtt
+    # state_topic: dummy/floorplan/sensor
+    # name: Floorplan
+    
+# homeassistant:
+  # customize:    
+    # binary_sensor.floorplan:
+      # custom_ui_state_card: state-card-floorplan
+      # config: !include floorplan.yaml

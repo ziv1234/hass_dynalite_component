@@ -1,0 +1,8 @@
+{
+  "domain": "dynalite",
+  "name": "Direct Integration for Philips Dynalite",
+  "documentation": "",
+  "dependencies": [],
+  "codeowners": ["zivkedem"],
+  "requirements": []
+}
