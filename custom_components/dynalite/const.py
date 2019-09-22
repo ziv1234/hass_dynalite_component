@@ -15,4 +15,5 @@ CONF_CHANNELTYPE = 'type'
 CONF_FACTOR = 'factor'
 CONF_TILTPERCENTAGE = 'tilt'
 CONF_AUTODISCOVER = 'autodiscover'
+CONF_POLLTIMER = 'polltimer'
 DATA_CONFIGS = "dynalite_configs"

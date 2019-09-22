@@ -29,6 +29,7 @@ dynalite:
     - host: 10.0.0.200
       port: 95
       autodiscover: true
+      polltimer: 10
       area:
         '9':
           name: Office

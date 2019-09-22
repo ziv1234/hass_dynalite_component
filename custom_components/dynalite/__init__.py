@@ -10,7 +10,7 @@ from homeassistant.const import CONF_FILENAME, CONF_HOST, CONF_PORT, CONF_NAME, 
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
 from .const import (DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT,
-                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER)
+                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER)
 from .bridge import DynaliteBridge
 
 # Loading the config flow file will register the flow
@@ -66,6 +66,7 @@ BRIDGE_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
     vol.Optional(CONF_LOGLEVEL, default=DEFAULT_LOGGING): cv.string,
     vol.Optional(CONF_AUTODISCOVER, default=True):cv.boolean,
+    vol.Optional(CONF_POLLTIMER, default=1.0):vol.Coerce(float),
     vol.Optional(CONF_AREA): AREA_SCHEMA,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     vol.Optional(CONF_DEFAULT): PLATFORM_DEFAULTS_SCHEMA,
