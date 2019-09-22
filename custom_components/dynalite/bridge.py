@@ -6,11 +6,11 @@ from homeassistant.const import CONF_COVERS
 from homeassistant.helpers import device_registry as dr
 import pprint
 
-from .const import DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE
+from .const import DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_TILTPERCENTAGE
 from .dynalite_lib.dynalite import Dynalite
 from .light import DynaliteChannelLight
 from .switch import DynaliteChannelSwitch, DynalitePresetSwitch
-from .cover import DynaliteChannelCover
+from .cover import DynaliteChannelCover, DynaliteChannelCoverWithTilt
 
 
 class DynaliteBridge:
@@ -152,7 +152,10 @@ class DynaliteBridge:
             self.async_add_entities['switch']([newEntity])
         elif channelType == 'cover':
             factor = channelConfig[CONF_FACTOR]
-            newEntity = DynaliteChannelCover(curArea, curChannel, curName, channelType, factor, self, curDevice)
+            if CONF_TILTPERCENTAGE in channelConfig:
+                newEntity = DynaliteChannelCoverWithTilt(curArea, curChannel, curName, channelType, factor, channelConfig[CONF_TILTPERCENTAGE], self, curDevice)
+            else:
+                newEntity = DynaliteChannelCover(curArea, curChannel, curName, channelType, factor, self, curDevice)
             self.async_add_entities['cover']([newEntity])
         else:
             LOGGER.info("unknown chnanel type %s - ignoring", channelType)
@@ -182,7 +185,6 @@ class DynaliteBridge:
             if (int(curArea) in self._added_channels) and (int(curChannel) in self._added_channels[int(curArea)]):
                 channelToSet = self._added_channels[int(curArea)][int(curChannel)]
                 channelToSet.update_level(actual_level, target_level)
-                #self.scheduleUpdateHAStateWhenAdded(channelToSet)
                 channelToSet.try_schedule_ha() # to only call if it was already added to ha
         elif action == 'cmd':
             if (int(curArea) in self._added_channels) and (int(curChannel) in self._added_channels[int(curArea)]):

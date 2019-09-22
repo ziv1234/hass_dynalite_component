@@ -46,13 +46,14 @@ dynalite:
               type: hidden
             '3':
         '108':
-          name: AAA
+          name: Office Blind
           nodefault: true
           channel:
             '2':
               name: Blind
               type: cover
               factor: 0.73
+              tilt: 0.02
       preset:
         '1':
           name: 'On'

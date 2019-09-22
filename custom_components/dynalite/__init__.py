@@ -10,7 +10,7 @@ from homeassistant.const import CONF_FILENAME, CONF_HOST, CONF_PORT, CONF_NAME, 
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
 from .const import (DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT,
-                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_FACTOR, CONF_AUTODISCOVER)
+                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER)
 from .bridge import DynaliteBridge
 
 # Loading the config flow file will register the flow
@@ -36,7 +36,8 @@ PRESET_SCHEMA = vol.Schema({
 CHANNEL_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME): cv.string,
     vol.Optional(CONF_CHANNELTYPE, default=DEFAULT_CHANNELTYPE): cv.string,
-    vol.Optional(CONF_FACTOR, default=DEFAULT_COVERFACTOR): cv.small_float
+    vol.Optional(CONF_FACTOR, default=DEFAULT_COVERFACTOR): cv.small_float,
+    vol.Optional(CONF_TILTPERCENTAGE): cv.small_float
 })
 
 CHANNEL_SCHEMA = vol.Schema({

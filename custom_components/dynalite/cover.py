@@ -23,7 +23,7 @@ class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
     """Representation of a Dynalite Channel as a Home Assistant Cover."""
 
     def __init__(self, area, channel, name, type, cover_factor, bridge, device):
-        """Initialize the light."""
+        """Initialize the cover."""
         self._area = area
         self._channel = channel
         self._name = name
@@ -46,11 +46,13 @@ class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
             self._current_position = 1
         if self._current_position < 0.00001:
             self._current_position = 0
+        if getattr(self, 'update_tilt', False):
+            self.update_tilt(factored_diff)
         
     @property
     def current_cover_position(self):
         """return the position of the cover from 0 to 100"""
-        return int(self._current_position*100)
+        return int(self._current_position * 100)
 
     @property
     def is_opening(self):
@@ -74,6 +76,7 @@ class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
 
     async def async_set_cover_position(self, **kwargs):
         """Open the cover."""
+        # LOGGER.debug("XXX async_set_cover_position params=%s", pprint.pformat(kwargs))
         target_position = kwargs['position'] / 100
         position_diff = target_position - self._current_position
         level_diff = position_diff * self._cover_factor
@@ -83,3 +86,49 @@ class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
     async def async_stop_cover(self, **kwargs):
         """Stop the cover."""
         self._device.stopFade()
+
+class DynaliteChannelCoverWithTilt(DynaliteChannelCover):
+    """Representation of a Dynalite Channel as a Home Assistant Cover that uses up and down for tilt."""
+
+    def __init__(self, area, channel, name, type, cover_factor, tilt_percentage, bridge, device):
+        DynaliteChannelCover.__init__(self, area, channel, name, type, cover_factor, bridge, device)
+        self._tilt_percentage = tilt_percentage
+        self._current_tilt = 0
+        
+    def update_tilt(self, diff):
+        tilt_diff = diff / self._tilt_percentage
+        self._current_tilt = max(0, min(1, self._current_tilt + tilt_diff))
+
+    @property
+    def current_cover_tilt_position(self):
+        return int(self._current_tilt * 100)
+    
+    def apply_tilt_diff(self, tilt_diff):
+        # LOGGER.debug("XXX apply_tilt_diff diff=%s", tilt_diff)
+        position_diff = tilt_diff * self._tilt_percentage
+        target_position = int(100 * max(0, min(1, self._current_position + position_diff)))
+        self._bridge.hass.async_create_task(self.async_set_cover_position(position=target_position))
+    
+    async def async_open_cover_tilt(self, **kwargs):
+        # LOGGER.debug("XXX async_open_cover_tilt params=%s", pprint.pformat(kwargs))
+        if self._current_tilt == 1:
+            return
+        else:
+            self.apply_tilt_diff(1 - self._current_tilt)
+
+    async def async_close_cover_tilt(self, **kwargs):
+        # LOGGER.debug("XXX async_close_cover_tilt params=%s", pprint.pformat(kwargs))
+        if self._current_tilt == 0:
+            return
+        else:
+            self.apply_tilt_diff(0 - self._current_tilt)
+
+    async def async_set_cover_tilt_position(self, **kwargs):
+        # LOGGER.debug("XXX async_set_cover_tilt_position params=%s", pprint.pformat(kwargs))
+        target_position = kwargs['tilt_position'] / 100
+        self.apply_tilt_diff(target_position - self._current_tilt)
+        
+    async def async_stop_cover_tilt(self, **kwargs):
+        # LOGGER.debug("XXX async_stop_cover_tilt params=%s", pprint.pformat(kwargs))
+        self._bridge.hass.async_create_task(self.async_stop_cover())
+

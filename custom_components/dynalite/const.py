@@ -13,5 +13,6 @@ CONF_FADE = 'fade'
 CONF_DEFAULT = 'default'
 CONF_CHANNELTYPE = 'type'
 CONF_FACTOR = 'factor'
+CONF_TILTPERCENTAGE = 'tilt'
 CONF_AUTODISCOVER = 'autodiscover'
 DATA_CONFIGS = "dynalite_configs"
