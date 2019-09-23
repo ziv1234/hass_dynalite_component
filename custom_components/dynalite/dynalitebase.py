@@ -44,13 +44,10 @@ class DynaliteBase(object): # Deriving from Object so it doesn't override the en
         }
 
     def try_schedule_ha(self):
-        if getattr(self, '_added_to_ha', False): # if it was not set, no need to update. will be updated when added to ha
+        if self.hass: # if it was not added yet to ha, need to update. will be updated when added to ha
             self.schedule_update_ha_state()
         else:
             LOGGER.debug("%s not ready - not updating" % self._name)
-
-    async def async_added_to_hass(self):
-        setattr(self, '_added_to_ha', True)
 
 class DynaliteChannelBase(DynaliteBase): 
     """Representation of a Dynalite Channel as a Home Assistant Cover."""
