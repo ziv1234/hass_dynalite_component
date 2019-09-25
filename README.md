@@ -137,4 +137,4 @@ Some channels of type 'cover' also tilt and open the tilt when opening, and clos
 
 * **Troy Kelly** - *Initial work* - [troykelly](https://github.com/troykelly)
 
-Troy was responsible for the Dynalite python library and for a component that served as a base for this component. Amazing work by him.
+Troy was responsible for the Dynalite python library and for a component that served as a base for this component. While refactored, most of this code comes from his repositories. Amazing work by him.
