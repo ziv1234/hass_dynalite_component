@@ -48,7 +48,7 @@ dynalite:
               type: hidden
             '3':
         '108':
-          name: Office Blind
+          name: Blind
           nodefault: true
           areaoverride: Office
           channel:
