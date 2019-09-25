@@ -29,7 +29,8 @@ dynalite:
     - host: 10.0.0.200
       port: 95
       autodiscover: true
-      polltimer: 10
+      polltimer: 1
+      areacreate: create
       area:
         '9':
           name: Office
@@ -49,6 +50,7 @@ dynalite:
         '108':
           name: Office Blind
           nodefault: true
+          areaoverride: Office
           channel:
             '2':
               name: Blind
@@ -69,8 +71,8 @@ dynalite:
   # - platform: kodi
     # host: 10.0.0.13
     
-heos:
-  host: 10.0.0.221
+# heos:
+  # host: 10.0.0.221
   
 # climate:
   # - platform: coolmaster

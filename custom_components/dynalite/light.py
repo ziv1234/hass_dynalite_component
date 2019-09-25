@@ -21,12 +21,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class DynaliteChannelLight(DynaliteChannelBase, Light):
     """Representation of a Dynalite Channel as a Home Assistant Light."""
 
-    def __init__(self, area, channel, name, type, bridge, device):
+    def __init__(self, area, channel, name, type, hass_area, bridge, device):
         """Initialize the light."""
         self._area = area
         self._channel = channel
         self._name = name
         self._type = type
+        self._hass_area = hass_area
         self._level = 0
         self._bridge = bridge
         self._device = device

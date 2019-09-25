@@ -7,10 +7,11 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_FILENAME, CONF_HOST, CONF_PORT, CONF_NAME, CONF_ICON, CONF_COVERS
-from homeassistant.helpers import config_validation as cv, device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr, area_registry as ar # XXX
 
 from .const import (DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT,
-                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER)
+                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER,
+                    CONF_AREACREATE, CONF_AREAOVERRIDE)
 from .bridge import DynaliteBridge
 
 # Loading the config flow file will register the flow
@@ -48,6 +49,7 @@ AREA_DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
     vol.Optional(CONF_FADE): cv.string,
     vol.Optional(CONF_NODEFAULT): cv.boolean,
+    vol.Optional(CONF_AREAOVERRIDE): cv.string,
     vol.Optional(CONF_PRESET): PRESET_SCHEMA,
     vol.Optional(CONF_CHANNEL): CHANNEL_SCHEMA
 })
@@ -65,8 +67,9 @@ BRIDGE_CONFIG_SCHEMA = vol.Schema({
     vol.Required(CONF_HOST): cv.string,
     vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
     vol.Optional(CONF_LOGLEVEL, default=DEFAULT_LOGGING): cv.string,
-    vol.Optional(CONF_AUTODISCOVER, default=True):cv.boolean,
-    vol.Optional(CONF_POLLTIMER, default=1.0):vol.Coerce(float),
+    vol.Optional(CONF_AUTODISCOVER, default=True): cv.boolean,
+    vol.Optional(CONF_AREACREATE, default='manual'): cv.string, # can be 'manual', 'assign', 'create'
+    vol.Optional(CONF_POLLTIMER, default=1.0): vol.Coerce(float),
     vol.Optional(CONF_AREA): AREA_SCHEMA,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     vol.Optional(CONF_DEFAULT): PLATFORM_DEFAULTS_SCHEMA,

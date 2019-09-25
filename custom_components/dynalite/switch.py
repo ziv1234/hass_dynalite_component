@@ -21,12 +21,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class DynaliteChannelSwitch(DynaliteChannelBase, SwitchDevice):
     """Representation of a Dynalite Channel as a Home Assistant Switch."""
 
-    def __init__(self, area, channel, name, type, bridge, device):
+    def __init__(self, area, channel, name, type, hass_area, bridge, device):
         """Initialize the switch."""
         self._area = area
         self._channel = channel
         self._name = name
         self._type = type
+        self._hass_area = hass_area
         self._level = 0
         self._bridge = bridge
         self._device = device
@@ -48,15 +49,21 @@ class DynaliteChannelSwitch(DynaliteChannelBase, SwitchDevice):
 class DynalitePresetSwitch(DynaliteBase, SwitchDevice):
     """Representation of a Dynalite Preset as a Home Assistant Switch."""
 
-    def __init__(self, area, preset, name, type, bridge, device):
+    def __init__(self, area, preset, name, type, hass_area, bridge, device):
         """Initialize the switch."""
         self._area = area
         self._preset = preset
         self._name = name
         self._type = type
+        self._hass_area = hass_area
         self._level = 0
         self._bridge = bridge
         self._device = device
+
+    @property
+    def unique_id(self):
+        """Return the ID of this cover."""
+        return "dynalite_area_"+str(self._area)+"_preset_"+str(self._preset)
 
     @property
     def is_on(self):
