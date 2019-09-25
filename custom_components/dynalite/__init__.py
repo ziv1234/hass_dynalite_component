@@ -10,7 +10,7 @@ from homeassistant.const import CONF_FILENAME, CONF_HOST, CONF_PORT, CONF_NAME, 
 from homeassistant.helpers import config_validation as cv, device_registry as dr, area_registry as ar # XXX
 
 from .const import (DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT,
-                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_HIDDENCHANNEL, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER,
+                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER,
                     CONF_AREACREATE, CONF_AREAOVERRIDE)
 from .bridge import DynaliteBridge
 
@@ -26,8 +26,9 @@ DEFAULT_COVERDURATION = 120 # 2 min to open or close cover
 DEFAULT_COVERFACTOR = 1.0 # cover goes from closed(0.0) to open (1.0). If it needs less than the range, use a lower number
 
 PRESET_DATA_SCHEMA = vol.Schema({
-    vol.Required(CONF_NAME): cv.string,
-    vol.Optional(CONF_FADE): cv.string # XXX may want this for channel as well
+    vol.Optional(CONF_NAME): cv.string,
+    vol.Optional(CONF_FADE): cv.string, # XXX may want this for channel as well
+    vol.Optional(CONF_HIDDENENTITY, default=False): cv.boolean
 })
 
 PRESET_SCHEMA = vol.Schema({
@@ -37,7 +38,7 @@ PRESET_SCHEMA = vol.Schema({
 CHANNEL_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME): cv.string,
     vol.Optional(CONF_CHANNELTYPE, default=DEFAULT_CHANNELTYPE): cv.string,
-    vol.Optional(CONF_HIDDENCHANNEL, default=False): cv.boolean,
+    vol.Optional(CONF_HIDDENENTITY, default=False): cv.boolean,
     vol.Optional(CONF_FACTOR, default=DEFAULT_COVERFACTOR): cv.small_float,
     vol.Optional(CONF_TILTPERCENTAGE): cv.small_float
 })

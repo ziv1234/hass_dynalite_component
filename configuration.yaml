@@ -58,6 +58,9 @@ dynalite:
               type: cover
               factor: 0.73
               tilt: 0.02
+          preset:
+            '1':
+              hidden: true
       preset:
         '1':
           name: 'On'

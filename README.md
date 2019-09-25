@@ -91,9 +91,11 @@ dynalite:
 ### Presets
 Presets are optionally defined under `area`'s (as above) and are required to be defined in the root of the config under `preset`.
 
-Preset's that you wish to call must be defined with at least a name.
+Presets that you wish to call must be defined with at least a name.
 
-Preset's may optionally also be defined with a `fade` time in seconds.
+Presets may optionally also be defined with a `fade` time in seconds.
+
+Presets may optionally also be defined with a `hidden` option that if set, it will be hidden from the UI
 ```yaml
       preset:
         '1':

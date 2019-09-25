@@ -6,7 +6,7 @@ from homeassistant.const import CONF_COVERS, CONF_NAME
 from homeassistant.helpers import device_registry as dr, area_registry as ar
 import pprint
 
-from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENCHANNEL, CONF_TILTPERCENTAGE,
+from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_TILTPERCENTAGE,
                     CONF_AREACREATE, CONF_AREAOVERRIDE)
 from .dynalite_lib.dynalite import Dynalite
 from .light import DynaliteChannelLight
@@ -117,11 +117,17 @@ class DynaliteBridge:
         curName = event.data['name']
         curDevice = self._dynalite.devices['area'][curArea].preset[curPreset]
         hassArea = self.getHassArea(curArea)
-        newSwitch = DynalitePresetSwitch(curArea, curPreset, curName, "preset", hassArea, self, curDevice)
-        self.async_add_entities['switch']([newSwitch])
+        newEntity = DynalitePresetSwitch(curArea, curPreset, curName, "preset", hassArea, self, curDevice)
+        self.async_add_entities['switch']([newEntity])
         if (curArea not in self.added_presets):
             self.added_presets[curArea] = {}
-        self.added_presets[curArea][curPreset] = newSwitch
+        self.added_presets[curArea][curPreset] = newEntity
+        try:
+            hidden = self.config['area'][str(curArea)]['preset'][str(curPreset)][CONF_HIDDENENTITY]
+        except KeyError:
+            hidden = False
+        if hidden:
+            newEntity.set_hidden(True)   
         LOGGER.debug("Creating Dynalite preset area=%s preset=%s name=%s" % (curArea, curPreset, curName))
 
     def handlePresetChange(self, event=None, dynalite=None):
@@ -176,7 +182,7 @@ class DynaliteBridge:
         if (curArea not in self.added_channels):
             self.added_channels[curArea] = {}
         self.added_channels[curArea][curChannel] = newEntity
-        if channelConfig[CONF_HIDDENCHANNEL]:
+        if channelConfig and channelConfig[CONF_HIDDENENTITY]:
             newEntity.set_hidden(True)   
         LOGGER.debug("Creating Dynalite channel area=%s channel=%s name=%s" % (curArea, curChannel, curName))
 
