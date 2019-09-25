@@ -24,7 +24,7 @@ dynalite:
       autodiscover: true    # When new presets or channels are activated on the network, add them dynamically
       polltimer: 1          # When there is a command with a fade (e.g. raise blinds), poll interval to find current status until it settles
       areacreate: create    # Automatically assign Home Assistant areas. Can be either 'create', which creates the areas on the fly, 'assign', which assigns devices to areas if they already exist, and 'manual' which ignores the areas
-      log_level: DEBUG		# Turn this off when you have things working
+      log_level: DEBUG      # Turn this off when you have things working
 ```
 
 ### Areas
@@ -127,7 +127,7 @@ Channels are optionally defined under `area`'s (as above) and are required to be
 
 Channels that do not have a name will receive a name "AREANAM Channel X"
 
-Channels can have an optional argument `type` which can be 'light', 'switch', or 'cover', creating the corresponding entity in Home Assistant
+Channels can have an optional argument `type` which can be 'light', 'switch', or 'cover', creating the corresponding entity in Home Assistant. If not defined, 'light' is assumed
 
 Channels of type 'cover' are ones where setting them to max level opens the cover and min level closes it. some covers (like mine) only need a portion of it, so if they are at 0 and go up to 0.75, they will be fully raised and stopped. This can be configures with the optional `factor` parameter
 
