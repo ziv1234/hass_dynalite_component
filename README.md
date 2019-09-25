@@ -129,6 +129,8 @@ Channels that do not have a name will receive a name "AREANAM Channel X"
 
 Channels can have an optional argument `type` which can be 'light', 'switch', or 'cover', creating the corresponding entity in Home Assistant. If not defined, 'light' is assumed
 
+Channels can have an optional argument `hidden` which if set, hides them in the UI
+
 Channels of type 'cover' are ones where setting them to max level opens the cover and min level closes it. some covers (like mine) only need a portion of it, so if they are at 0 and go up to 0.75, they will be fully raised and stopped. This can be configures with the optional `factor` parameter
 
 Some channels of type 'cover' also tilt and open the tilt when opening, and close it when closing, so it also has the optional `tilt` parameter which ssays how much of the full open/close is needed for just the tilt to adjust

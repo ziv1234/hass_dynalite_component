@@ -6,7 +6,7 @@ from homeassistant.const import CONF_COVERS, CONF_NAME
 from homeassistant.helpers import device_registry as dr, area_registry as ar
 import pprint
 
-from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_TILTPERCENTAGE,
+from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENCHANNEL, CONF_TILTPERCENTAGE,
                     CONF_AREACREATE, CONF_AREAOVERRIDE)
 from .dynalite_lib.dynalite import Dynalite
 from .light import DynaliteChannelLight
@@ -160,10 +160,8 @@ class DynaliteBridge:
         if channelType == 'light':
             newEntity = DynaliteChannelLight(curArea, curChannel, curName, channelType, hassArea, self, curDevice)
             self.async_add_entities['light']([newEntity])
-        elif channelType == 'switch' or channelType == 'hidden': # XXX fix the hidden part
+        elif channelType == 'switch':
             newEntity = DynaliteChannelSwitch(curArea, curChannel, curName, channelType, hassArea, self, curDevice)
-            if channelType == 'hidden':
-                newEntity.set_hidden(True)
             self.async_add_entities['switch']([newEntity])
         elif channelType == 'cover':
             factor = channelConfig[CONF_FACTOR]
@@ -178,6 +176,8 @@ class DynaliteBridge:
         if (curArea not in self.added_channels):
             self.added_channels[curArea] = {}
         self.added_channels[curArea][curChannel] = newEntity
+        if channelConfig[CONF_HIDDENCHANNEL]:
+            newEntity.set_hidden(True)   
         LOGGER.debug("Creating Dynalite channel area=%s channel=%s name=%s" % (curArea, curChannel, curName))
 
     def handleChannelChange(self, event=None, dynalite=None):

@@ -45,7 +45,8 @@ dynalite:
           name: Cinema
           channel:
             '1':
-              type: hidden
+              type: switch
+              hidden: true
             '3':
         '108':
           name: Blind

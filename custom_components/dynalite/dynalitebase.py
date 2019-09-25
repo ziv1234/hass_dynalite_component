@@ -27,7 +27,7 @@ class DynaliteBase(object): # Deriving from Object so it doesn't override the en
         return getattr(self, '_hidden', False) # if not defined, assume false
 
     def set_hidden(self, hidden):
-        setattr(self, '_hidden', True)
+        setattr(self, '_hidden', hidden)
         
     async def async_update(self):
         return
