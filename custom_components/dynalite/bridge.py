@@ -10,7 +10,7 @@ from homeassistant.helpers import device_registry as dr, area_registry as ar
 from .dynalite_lib.dynalite import Dynalite
 
 from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_TILTPERCENTAGE,
-                    CONF_AREACREATE, CONF_AREAOVERRIDE)
+                    CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS)
 from .light import DynaliteChannelLight
 from .switch import DynaliteChannelSwitch, DynalitePresetSwitch
 from .cover import DynaliteChannelCover, DynaliteChannelCoverWithTilt
@@ -180,10 +180,11 @@ class DynaliteBridge:
             self.async_add_entities['switch']([newEntity])
         elif channelType == 'cover':
             factor = channelConfig[CONF_FACTOR]
+            deviceClass = channelConfig[CONF_CHANNELCLASS]
             if CONF_TILTPERCENTAGE in channelConfig:
-                newEntity = DynaliteChannelCoverWithTilt(curArea, curChannel, curName, channelType, factor, channelConfig[CONF_TILTPERCENTAGE], hassArea, self, curDevice)
+                newEntity = DynaliteChannelCoverWithTilt(curArea, curChannel, curName, channelType, deviceClass, factor, channelConfig[CONF_TILTPERCENTAGE], hassArea, self, curDevice)
             else:
-                newEntity = DynaliteChannelCover(curArea, curChannel, curName, channelType, factor, hassArea, self, curDevice)
+                newEntity = DynaliteChannelCover(curArea, curChannel, curName, channelType, deviceClass, factor, hassArea, self, curDevice)
             self.async_add_entities['cover']([newEntity])
         else:
             LOGGER.info("unknown chnanel type %s - ignoring", channelType)

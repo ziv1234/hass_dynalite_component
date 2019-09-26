@@ -5,7 +5,7 @@ from .const import DOMAIN, LOGGER, DATA_CONFIGS
 import pprint
 
 from homeassistant.const import CONF_COVERS
-from homeassistant.components.cover import CoverDevice
+from homeassistant.components.cover import CoverDevice, ATTR_POSITION, ATTR_TILT_POSITION
 from homeassistant.core import callback
 
 from .dynalitebase import async_setup_channel_entry, DynaliteChannelBase
@@ -24,12 +24,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
     """Representation of a Dynalite Channel as a Home Assistant Cover."""
 
-    def __init__(self, area, channel, name, type, cover_factor, hass_area, bridge, device):
+    def __init__(self, area, channel, name, type, device_class, cover_factor, hass_area, bridge, device):
         """Initialize the cover."""
         self._area = area
         self._channel = channel
         self._name = name
         self._type = type
+        self._device_class = device_class
         self._cover_factor = cover_factor
         self._hass_area = hass_area
         self._actual_level = 0
@@ -37,6 +38,10 @@ class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
         self._current_position = 0
         self._bridge = bridge
         self._device = device
+
+    @property
+    def device_class(self):
+        return self._device_class
 
     @callback
     def update_level(self, actual_level, target_level):
@@ -81,7 +86,7 @@ class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
     async def async_set_cover_position(self, **kwargs):
         """Open the cover."""
         # LOGGER.debug("XXX async_set_cover_position params=%s", pprint.pformat(kwargs))
-        target_position = kwargs['position'] / 100
+        target_position = kwargs[ATTR_POSITION] / 100
         position_diff = target_position - self._current_position
         level_diff = position_diff * self._cover_factor
         target_level = min(1, max(0, self._actual_level + level_diff))
@@ -94,8 +99,8 @@ class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
 class DynaliteChannelCoverWithTilt(DynaliteChannelCover):
     """Representation of a Dynalite Channel as a Home Assistant Cover that uses up and down for tilt."""
 
-    def __init__(self, area, channel, name, type, cover_factor, tilt_percentage, hass_area, bridge, device):
-        DynaliteChannelCover.__init__(self, area, channel, name, type, cover_factor, hass_area, bridge, device)
+    def __init__(self, area, channel, name, type, device_class, cover_factor, tilt_percentage, hass_area, bridge, device):
+        DynaliteChannelCover.__init__(self, area, channel, name, type, device_class, cover_factor, hass_area, bridge, device)
         self._tilt_percentage = tilt_percentage
         self._current_tilt = 0
         
@@ -127,7 +132,7 @@ class DynaliteChannelCoverWithTilt(DynaliteChannelCover):
             self.apply_tilt_diff(0 - self._current_tilt)
 
     async def async_set_cover_tilt_position(self, **kwargs):
-        target_position = kwargs['tilt_position'] / 100
+        target_position = kwargs[ATTR_TILT_POSITION] / 100
         self.apply_tilt_diff(target_position - self._current_tilt)
         
     async def async_stop_cover_tilt(self, **kwargs):

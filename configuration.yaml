@@ -48,6 +48,7 @@ dynalite:
               name: Center
             '2': 
               name: East
+              fade: 2
             '3': 
               name: West
         '10':
@@ -65,6 +66,7 @@ dynalite:
             '2':
               name: Blind
               type: cover
+              class: blind
               factor: 0.73
               tilt: 0.02
           preset:

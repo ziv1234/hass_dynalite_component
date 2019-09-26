@@ -8,10 +8,11 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_FILENAME, CONF_HOST, CONF_PORT, CONF_NAME, CONF_ICON, CONF_COVERS
 from homeassistant.helpers import config_validation as cv
+from homeassistant.components.cover import DEVICE_CLASSES_SCHEMA, DEVICE_CLASS_SHUTTER
 
 from .const import (DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT,
                     CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER,
-                    CONF_AREACREATE, CONF_AREAOVERRIDE)
+                    CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS)
 from .bridge import DynaliteBridge
 
 # Loading the config flow file will register the flow
@@ -27,7 +28,7 @@ DEFAULT_COVERFACTOR = 1.0 # cover goes from closed(0.0) to open (1.0). If it nee
 
 PRESET_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_FADE): cv.string, # XXX may want this for channel as well
+    vol.Optional(CONF_FADE): cv.string,
     vol.Optional(CONF_HIDDENENTITY, default=False): cv.boolean
 })
 
@@ -37,7 +38,9 @@ PRESET_SCHEMA = vol.Schema({
 
 CHANNEL_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME): cv.string,
+    vol.Optional(CONF_FADE): cv.string,
     vol.Optional(CONF_CHANNELTYPE, default=DEFAULT_CHANNELTYPE): vol.Any('light','switch','cover'),
+    vol.Optional(CONF_CHANNELCLASS, default=DEVICE_CLASS_SHUTTER): DEVICE_CLASSES_SCHEMA,
     vol.Optional(CONF_HIDDENENTITY, default=False): cv.boolean,
     vol.Optional(CONF_FACTOR, default=DEFAULT_COVERFACTOR): cv.small_float,
     vol.Optional(CONF_TILTPERCENTAGE): cv.small_float
