@@ -7,7 +7,7 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_FILENAME, CONF_HOST, CONF_PORT, CONF_NAME, CONF_ICON, CONF_COVERS
-from homeassistant.helpers import config_validation as cv, device_registry as dr, area_registry as ar # XXX
+from homeassistant.helpers import config_validation as cv
 
 from .const import (DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT,
                     CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER,
@@ -37,7 +37,7 @@ PRESET_SCHEMA = vol.Schema({
 
 CHANNEL_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_CHANNELTYPE, default=DEFAULT_CHANNELTYPE): cv.string,
+    vol.Optional(CONF_CHANNELTYPE, default=DEFAULT_CHANNELTYPE): vol.Any('light','switch','cover'),
     vol.Optional(CONF_HIDDENENTITY, default=False): cv.boolean,
     vol.Optional(CONF_FACTOR, default=DEFAULT_COVERFACTOR): cv.small_float,
     vol.Optional(CONF_TILTPERCENTAGE): cv.small_float
@@ -70,7 +70,7 @@ BRIDGE_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
     vol.Optional(CONF_LOGLEVEL, default=DEFAULT_LOGGING): cv.string,
     vol.Optional(CONF_AUTODISCOVER, default=True): cv.boolean,
-    vol.Optional(CONF_AREACREATE, default='manual'): cv.string, # can be 'manual', 'assign', 'create'
+    vol.Optional(CONF_AREACREATE, default='manual'): vol.Any('manual', 'assign', 'create'),
     vol.Optional(CONF_POLLTIMER, default=1.0): vol.Coerce(float),
     vol.Optional(CONF_AREA): AREA_SCHEMA,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
