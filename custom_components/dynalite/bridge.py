@@ -48,9 +48,9 @@ class DynaliteBridge:
         
         self.config = hass.data[DATA_CONFIGS][host]
         self._dynalite = Dynalite(config=self.config, loop=hass.loop)
-        eventHandler = self._dynalite.addListener(  # XXX Maybe remove
+        eventHandler = self._dynalite.addListener(
             listenerFunction=self.handleEvent)
-        eventHandler.monitorEvent('*') # XXX Maybe remove
+        eventHandler.monitorEvent('*')
         newPresetHandler = self._dynalite.addListener(
             listenerFunction=self.handleNewPreset)
         newPresetHandler.monitorEvent('NEWPRESET')
@@ -158,10 +158,12 @@ class DynaliteBridge:
             return
         curName = event.data['name']
         curDevice = self._dynalite.devices['area'][curArea].channel[curChannel]
-        channelConfig=self.config['area'][str(curArea)]['channel'][str(curChannel)] if str(curChannel) in self.config['area'][str(curArea)]['channel'] else None
+        try:
+            channelConfig=self.config['area'][str(curArea)]['channel'][str(curChannel)]
+        except KeyError:
+            channelConfig = None
         LOGGER.debug("handleNewChannel - channelConfig=%s" % pprint.pformat(channelConfig))
-        channelType = channelConfig[CONF_CHANNELTYPE] if channelConfig and CONF_CHANNELTYPE in channelConfig else 'light'
-        channelType = channelType.lower()
+        channelType = channelConfig[CONF_CHANNELTYPE].lower() if channelConfig and CONF_CHANNELTYPE in channelConfig else 'light'
         hassArea = self.getHassArea(curArea)
         if channelType == 'light':
             newEntity = DynaliteChannelLight(curArea, curChannel, curName, channelType, hassArea, self, curDevice)
@@ -203,13 +205,17 @@ class DynaliteBridge:
         if action == 'report':
             actual_level = (255 - event.data['actual_level']) / 254
             target_level = (255 - event.data['target_level']) / 254
-            if (int(curArea) in self.added_channels) and (int(curChannel) in self.added_channels[int(curArea)]):
+            try:
                 channelToSet = self.added_channels[int(curArea)][int(curChannel)]
                 channelToSet.update_level(actual_level, target_level)
                 channelToSet.try_schedule_ha() # to only call if it was already added to ha
+            except KeyError:
+                pass
         elif action == 'cmd':
-            if (int(curArea) in self.added_channels) and (int(curChannel) in self.added_channels[int(curArea)]):
+            try:
                 self.added_channels[int(curArea)][int(curChannel)].try_schedule_ha()
+            except KeyError:
+                pass
         else:
             LOGGER.error("unknown action for channel change %s", action)
         
@@ -219,7 +225,7 @@ class DynaliteBridge:
             LOGGER.debug("area assignment set to manual - ignoring")
             return # only need to update the areas if it is 'assign' or 'create'
         if areacreate not in ['assign', 'create']:
-            LOGGER.debug(CONF_AREACREATE + " has unknown value of %s - assuming \"manual\" and ignoring", areacreate) # XXX think about how to do it in vol/cv
+            LOGGER.debug(CONF_AREACREATE + " has unknown value of %s - assuming \"manual\" and ignoring", areacreate)
             return
         uniqueID = entity.unique_id
         hassArea = entity.get_hass_area
