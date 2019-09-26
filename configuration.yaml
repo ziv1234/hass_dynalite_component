@@ -14,6 +14,15 @@ group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
 
+homeassistant:
+  elevation: 61
+  latitude: 32.13520170307117
+  name: Home
+  longitude: 34.83580112457276
+  time_zone: Asia/Jerusalem
+  unit_system: metric
+  
+
 # hacs:
     # token: 36935147a197055c12576acfe9f9f950f825ad87
 
@@ -49,7 +58,7 @@ dynalite:
               hidden: true
             '3':
         '108':
-          name: Blind
+          name: Office
           nodefault: true
           areaoverride: Office
           channel:
