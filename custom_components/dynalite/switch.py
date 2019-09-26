@@ -6,6 +6,7 @@ import pprint
 
 from .dynalitebase import async_setup_channel_entry, DynaliteChannelBase, DynaliteBase
 from homeassistant.components.switch import SwitchDevice
+from homeassistant.core import callback
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Old way.
@@ -37,6 +38,7 @@ class DynaliteChannelSwitch(DynaliteChannelBase, SwitchDevice):
         """Return true if switch is on."""
         return self._level > 0
 
+    @callback
     def update_level(self, actual_level, target_level):
         self._level = actual_level
 
@@ -70,6 +72,7 @@ class DynalitePresetSwitch(DynaliteBase, SwitchDevice):
         """Return true if device is on."""
         return self._device.active
 
+    @callback
     def update_level(self, actual_level, target_level):
         self._level = actual_level
 

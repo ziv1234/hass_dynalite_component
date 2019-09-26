@@ -1,8 +1,11 @@
 """Support for the Dynalite channels as switches."""
 import asyncio
 import logging
-from .const import DOMAIN, LOGGER, DATA_CONFIGS
 import pprint
+
+from homeassistant.core import callback
+
+from .const import DOMAIN, LOGGER, DATA_CONFIGS
 
 def async_setup_channel_entry(category, hass, config_entry, async_add_entities):
     """Records the async_add_entities function to add them later when received from Dynalite."""
@@ -26,9 +29,11 @@ class DynaliteBase(object): # Deriving from Object so it doesn't override the en
         """Return true if this switch should be hidden from UI."""
         return getattr(self, '_hidden', False) # if not defined, assume false
 
+    @callback
     def set_hidden(self, hidden):
         setattr(self, '_hidden', hidden)
         
+    @callback
     async def async_update(self):
         return
 
@@ -40,6 +45,7 @@ class DynaliteBase(object): # Deriving from Object so it doesn't override the en
             'manufacturer': "Dynalite",
         }
 
+    @callback
     def try_schedule_ha(self):
         if self.hass: # if it was not added yet to ha, need to update. will be updated when added to ha
             self.schedule_update_ha_state()

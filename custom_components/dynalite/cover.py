@@ -6,6 +6,8 @@ import pprint
 
 from homeassistant.const import CONF_COVERS
 from homeassistant.components.cover import CoverDevice
+from homeassistant.core import callback
+
 from .dynalitebase import async_setup_channel_entry, DynaliteChannelBase
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
@@ -36,6 +38,7 @@ class DynaliteChannelCover(DynaliteChannelBase, CoverDevice):
         self._bridge = bridge
         self._device = device
 
+    @callback
     def update_level(self, actual_level, target_level):
         prev_actual_level = self._actual_level
         self._actual_level = actual_level
@@ -96,6 +99,7 @@ class DynaliteChannelCoverWithTilt(DynaliteChannelCover):
         self._tilt_percentage = tilt_percentage
         self._current_tilt = 0
         
+    @callback
     def update_tilt(self, diff):
         tilt_diff = diff / self._tilt_percentage
         self._current_tilt = max(0, min(1, self._current_tilt + tilt_diff))
@@ -104,6 +108,7 @@ class DynaliteChannelCoverWithTilt(DynaliteChannelCover):
     def current_cover_tilt_position(self):
         return int(self._current_tilt * 100)
     
+    @callback
     def apply_tilt_diff(self, tilt_diff):
         position_diff = tilt_diff * self._tilt_percentage
         target_position = int(100 * max(0, min(1, self._current_position + position_diff)))

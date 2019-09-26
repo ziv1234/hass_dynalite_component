@@ -5,7 +5,9 @@ from .const import DOMAIN, LOGGER
 import pprint
 
 from .dynalitebase import async_setup_channel_entry, DynaliteChannelBase
+
 from homeassistant.components.light import SUPPORT_BRIGHTNESS, ATTR_BRIGHTNESS, Light
+from homeassistant.core import callback
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Old way.
@@ -42,6 +44,7 @@ class DynaliteChannelLight(DynaliteChannelBase, Light):
         """Return true if device is on."""
         return self._level > 0
 
+    @callback
     def update_level(self, actual_level, target_level):
         self._level = actual_level
         

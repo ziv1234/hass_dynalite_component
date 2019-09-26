@@ -1,14 +1,16 @@
 """Code to handle a Hue bridge."""
 import asyncio
+import pprint
 
 from homeassistant import config_entries
+from homeassistant.core import callback
 from homeassistant.const import CONF_COVERS, CONF_NAME
 from homeassistant.helpers import device_registry as dr, area_registry as ar
-import pprint
+
+from .dynalite_lib.dynalite import Dynalite
 
 from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_TILTPERCENTAGE,
                     CONF_AREACREATE, CONF_AREAOVERRIDE)
-from .dynalite_lib.dynalite import Dynalite
 from .light import DynaliteChannelLight
 from .switch import DynaliteChannelSwitch, DynalitePresetSwitch
 from .cover import DynaliteChannelCover, DynaliteChannelCoverWithTilt
@@ -90,10 +92,12 @@ class DynaliteBridge:
         # None and True are OK
         return False not in results
 
+    @callback
     def handleEvent(self, event=None, dynalite=None):
         LOGGER.debug("handleEvent - type=%s event=%s" % (event.eventType, pprint.pformat(event.data)))
         return
 
+    @callback
     def getHassArea(self, area):
         areaConfig=self.config['area'][str(area)] if str(area) in self.config['area'] else None
         hassArea = areaConfig[CONF_NAME]
@@ -102,6 +106,7 @@ class DynaliteBridge:
             hassArea = overrideArea if overrideArea.lower() != 'none' else ''
         return hassArea
         
+    @callback
     def handleNewPreset(self, event=None, dynalite=None):
         LOGGER.debug("handleNewPreset - event=%s" % pprint.pformat(event.data))
         if not hasattr(event, 'data'):
@@ -130,6 +135,7 @@ class DynaliteBridge:
             newEntity.set_hidden(True)   
         LOGGER.debug("Creating Dynalite preset area=%s preset=%s name=%s" % (curArea, curPreset, curName))
 
+    @callback
     def handlePresetChange(self, event=None, dynalite=None):
         LOGGER.debug("handlePresetChange - event=%s" % pprint.pformat(event.data))
         if not hasattr(event, 'data'):
@@ -144,6 +150,7 @@ class DynaliteBridge:
             for curPresetInArea in self.added_presets[int(curArea)]:
                 self.added_presets[int(curArea)][curPresetInArea].try_schedule_ha()
 
+    @callback
     def handleNewChannel(self, event=None, dynalite=None):
         LOGGER.debug("handleNewChannel - event=%s" % pprint.pformat(event.data))
         if not hasattr(event, 'data'):
@@ -188,6 +195,7 @@ class DynaliteBridge:
             newEntity.set_hidden(True)   
         LOGGER.debug("Creating Dynalite channel area=%s channel=%s name=%s" % (curArea, curChannel, curName))
 
+    @callback
     def handleChannelChange(self, event=None, dynalite=None):
         LOGGER.debug("handleChannelChange - event=%s" % pprint.pformat(event.data))
         LOGGER.debug("handleChannelChange called event = %s" % event.msg)
