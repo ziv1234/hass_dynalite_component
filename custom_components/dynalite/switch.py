@@ -51,12 +51,11 @@ class DynaliteChannelSwitch(DynaliteChannelBase, SwitchDevice):
 class DynalitePresetSwitch(DynaliteBase, SwitchDevice):
     """Representation of a Dynalite Preset as a Home Assistant Switch."""
 
-    def __init__(self, area, preset, name, type, hass_area, bridge, device):
+    def __init__(self, area, preset, name, hass_area, bridge, device):
         """Initialize the switch."""
         self._area = area
         self._preset = preset
         self._name = name
-        self._type = type
         self._hass_area = hass_area
         self._level = 0
         self._bridge = bridge
@@ -70,7 +69,11 @@ class DynalitePresetSwitch(DynaliteBase, SwitchDevice):
     @property
     def is_on(self):
         """Return true if device is on."""
-        return self._device.active
+        new_level = self._device.active
+        if new_level != self._level:
+            self.update_listeners()
+        self._level = new_level
+        return self._level
 
     @callback
     def update_level(self, actual_level, target_level):
@@ -82,3 +85,52 @@ class DynalitePresetSwitch(DynaliteBase, SwitchDevice):
     async def async_turn_off(self, **kwargs):
         self._device.turnOff()
 
+class DynaliteRoomPresetSwitch(DynaliteBase, SwitchDevice):
+    """Representation of a Dynalite Preset as a Home Assistant Switch."""
+
+    def __init__(self, area, name, hass_area, bridge):
+        """Initialize the switch."""
+        self._area = area
+        self._name = name
+        self._hass_area = hass_area
+        self._bridge = bridge
+        self._device_on = None
+        self._device_off = None
+
+    @property
+    def available(self):
+        """Return if cover is available."""
+        return self._device_on and self._device_off
+
+    @property
+    def unique_id(self):
+        """Return the ID of this cover."""
+        return "dynalite_area_"+str(self._area)+"_room_switch"
+
+    @property
+    def is_on(self):
+        """Return true if device is on."""
+        return self._device_on.is_on
+
+    async def async_turn_on(self, **kwargs):
+        await self._device_on.async_turn_on()
+
+    async def async_turn_off(self, **kwargs):
+        await self._device_off.async_turn_on()
+        
+    @callback
+    def set_device(self, device_on=None, device_off=None):
+        if device_on:
+            self._device_on = device_on
+            device_on.add_listener(self.listener)
+        if device_off:
+            self._device_off = device_off
+            device_off.add_listener(self.listener)
+        if self._device_on and self._device_off:
+            if self.hass: # if it was not added yet to ha, need to update. will be updated when added to ha
+                self.schedule_update_ha_state()
+            
+    @callback
+    def listener(self):
+        if self.hass:
+            self.schedule_update_ha_state()

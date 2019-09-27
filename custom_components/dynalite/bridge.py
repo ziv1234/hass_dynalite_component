@@ -4,15 +4,16 @@ import pprint
 
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.const import CONF_COVERS, CONF_NAME
+from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_HOST
 from homeassistant.helpers import device_registry as dr, area_registry as ar
 
 from dynalite_lib.dynalite import Dynalite
 
 from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_TILTPERCENTAGE,
-                    CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS)
+                    CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS, CONF_TEMPLATE, CONF_ROOM_ON, CONF_ROOM_OFF, DEFAULT_TEMPLATES, CONF_ROOM, DEFAULT_CHANNELTYPE,
+                    CONF_AREA_CREATE_MANUAL, CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO)
 from .light import DynaliteChannelLight
-from .switch import DynaliteChannelSwitch, DynalitePresetSwitch
+from .switch import DynaliteChannelSwitch, DynalitePresetSwitch, DynaliteRoomPresetSwitch
 from .cover import DynaliteChannelCover, DynaliteChannelCoverWithTilt
 
 
@@ -27,6 +28,7 @@ class DynaliteBridge:
         self.async_add_entities = {}
         self.added_channels = {}
         self.added_presets = {}
+        self.added_room_switches = {}
         self.area_reg = None
         self.device_reg = None
         self.config = None
@@ -34,7 +36,7 @@ class DynaliteBridge:
     @property
     def host(self):
         """Return the host of this bridge."""
-        return self.config_entry.data["host"]
+        return self.config_entry.data[CONF_HOST]
 
     async def async_setup(self, tries=0):
         """Set up a Dynalite bridge based on host parameter."""
@@ -49,6 +51,16 @@ class DynaliteBridge:
             return False
         
         self.config = hass.data[DATA_CONFIGS][host]
+        # insert the templates
+        if CONF_TEMPLATE not in self.config:
+            LOGGER.debug(CONF_TEMPLATE + " not in config - using defaults")
+            self.config[CONF_TEMPLATE] = DEFAULT_TEMPLATES
+        else:
+            for template in DEFAULT_TEMPLATES:
+                if template not in self.config[CONF_TEMPLATE]:
+                    LOGGER.debug("%s not in " + CONF_TEMPLATE + " using default", template)
+                    self.config[CONF_TEMPLATE][template] = DEFAULT_TEMPLATES[template]
+                    
         self._dynalite = Dynalite(config=self.config, loop=hass.loop)
         eventHandler = self._dynalite.addListener(
             listenerFunction=self.handleEvent)
@@ -72,6 +84,8 @@ class DynaliteBridge:
             hass.async_create_task(
                 hass.config_entries.async_forward_entry_setup(self.config_entry, category) # XXX maybe handle the race condition if need to use before init. not urgent
             )
+        
+        hass.async_create_task(self.register_rooms())
 
         return True
 
@@ -92,6 +106,34 @@ class DynaliteBridge:
         # None and True are OK
         return False not in results
 
+    async def register_rooms(self):
+        if 'switch' not in self.async_add_entities:
+            LOGGER.debug("XXX switch async_add_entities not ready - requeing")
+            self.hass.async_create_task(self.register_rooms())
+            return
+        room_template = self.config[CONF_TEMPLATE][CONF_ROOM] # always defined either by the user or by the defaults
+        try:
+            preset_on = room_template[CONF_ROOM_ON]
+            preset_off = room_template[CONF_ROOM_OFF]
+        except KeyError:
+            LOGGER.error(CONF_ROOM + " template must have " + CONF_ROOM_ON + " and " + CONF_ROOM_OFF + " need to handle in config_validation") # XXX handle in cv
+            return
+        for curArea in self.config[CONF_AREA]:
+            if CONF_TEMPLATE in self.config[CONF_AREA][curArea] and self.config[CONF_AREA][curArea][CONF_TEMPLATE] == CONF_ROOM:
+                newEntity = DynaliteRoomPresetSwitch(curArea, self.config[CONF_AREA][curArea][CONF_NAME], self.getHassArea(curArea), self)
+                self.added_room_switches[int(curArea)] = newEntity
+                try:
+                    on_device = self.added_presets[int(curArea)][int(preset_on)]
+                    newEntity.set_device(device_on=on_device)
+                except KeyError:
+                    pass
+                try:
+                    off_device = self.added_presets[int(curArea)][int(preset_off)]
+                    newEntity.set_device(device_off=off_device)
+                except KeyError:
+                    pass
+                self.async_add_entities['switch']([newEntity]) 
+
     @callback
     def handleEvent(self, event=None, dynalite=None):
         LOGGER.debug("handleEvent - type=%s event=%s" % (event.eventType, pprint.pformat(event.data)))
@@ -99,7 +141,7 @@ class DynaliteBridge:
 
     @callback
     def getHassArea(self, area):
-        areaConfig=self.config['area'][str(area)] if str(area) in self.config['area'] else None
+        areaConfig=self.config[CONF_AREA][str(area)] if str(area) in self.config[CONF_AREA] else None
         hassArea = areaConfig[CONF_NAME]
         if CONF_AREAOVERRIDE in areaConfig:
             overrideArea = areaConfig[CONF_AREAOVERRIDE]
@@ -120,17 +162,31 @@ class DynaliteBridge:
         if not 'name' in event.data:
             return
         curName = event.data['name']
-        curDevice = self._dynalite.devices['area'][curArea].preset[curPreset]
-        hassArea = self.getHassArea(curArea)
-        newEntity = DynalitePresetSwitch(curArea, curPreset, curName, "preset", hassArea, self, curDevice)
+
+        curDevice = self._dynalite.devices[CONF_AREA][curArea].preset[curPreset]
+        newEntity = DynalitePresetSwitch(curArea, curPreset, curName, self.getHassArea(curArea), self, curDevice)
         self.async_add_entities['switch']([newEntity])
         if (curArea not in self.added_presets):
             self.added_presets[curArea] = {}
         self.added_presets[curArea][curPreset] = newEntity
+
         try:
-            hidden = self.config['area'][str(curArea)]['preset'][str(curPreset)][CONF_HIDDENENTITY]
+            hidden = self.config[CONF_AREA][str(curArea)][CONF_PRESET][str(curPreset)][CONF_HIDDENENTITY]
         except KeyError:
             hidden = False
+
+        if CONF_TEMPLATE in self.config[CONF_AREA][str(curArea)]: # templates may make some elements hidden
+            template = self.config[CONF_AREA][str(curArea)][CONF_TEMPLATE]
+            if template == CONF_ROOM:
+                hidden = True # in a template room, the presets will all be in the room switch
+                if int(curArea) in self.added_room_switches: # if it is not there yet, it will be added when the room switch will be created
+                    roomSwitch=self.added_room_switches[int(curArea)]
+                    roomTemplate = self.config[CONF_TEMPLATE][CONF_ROOM]
+                    if int(curPreset) == int(roomTemplate[CONF_ROOM_ON]):
+                        roomSwitch.set_device(device_on=newEntity)
+                    if int(curPreset) == int(roomTemplate[CONF_ROOM_OFF]):
+                        roomSwitch.set_device(device_off=newEntity)
+
         if hidden:
             newEntity.set_hidden(True)   
         LOGGER.debug("Creating Dynalite preset area=%s preset=%s name=%s" % (curArea, curPreset, curName))
@@ -146,6 +202,7 @@ class DynaliteBridge:
         if not 'preset' in event.data:
             return
         curPreset = event.data['preset']
+
         if int(curArea) in self.added_presets:
             for curPresetInArea in self.added_presets[int(curArea)]:
                 self.added_presets[int(curArea)][curPresetInArea].try_schedule_ha()
@@ -164,13 +221,13 @@ class DynaliteBridge:
         if not 'name' in event.data:
             return
         curName = event.data['name']
-        curDevice = self._dynalite.devices['area'][curArea].channel[curChannel]
+        curDevice = self._dynalite.devices[CONF_AREA][curArea].channel[curChannel]
         try:
-            channelConfig=self.config['area'][str(curArea)]['channel'][str(curChannel)]
+            channelConfig=self.config[CONF_AREA][str(curArea)][CONF_CHANNEL][str(curChannel)]
         except KeyError:
             channelConfig = None
         LOGGER.debug("handleNewChannel - channelConfig=%s" % pprint.pformat(channelConfig))
-        channelType = channelConfig[CONF_CHANNELTYPE].lower() if channelConfig and CONF_CHANNELTYPE in channelConfig else 'light'
+        channelType = channelConfig[CONF_CHANNELTYPE].lower() if channelConfig and CONF_CHANNELTYPE in channelConfig else DEFAULT_CHANNELTYPE
         hassArea = self.getHassArea(curArea)
         if channelType == 'light':
             newEntity = DynaliteChannelLight(curArea, curChannel, curName, channelType, hassArea, self, curDevice)
@@ -210,6 +267,7 @@ class DynaliteBridge:
         curChannel = event.data['channel']
         if not 'target_level' in event.data:
             return
+
         action = event.data['action']
         if action == 'report':
             actual_level = (255 - event.data['actual_level']) / 254
@@ -230,11 +288,11 @@ class DynaliteBridge:
         
     async def entity_added_to_ha(self, entity):
         areacreate = self.config[CONF_AREACREATE].lower()
-        if areacreate == 'manual':
+        if areacreate == CONF_AREA_CREATE_MANUAL:
             LOGGER.debug("area assignment set to manual - ignoring")
             return # only need to update the areas if it is 'assign' or 'create'
-        if areacreate not in ['assign', 'create']:
-            LOGGER.debug(CONF_AREACREATE + " has unknown value of %s - assuming \"manual\" and ignoring", areacreate)
+        if areacreate not in [CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO]:
+            LOGGER.debug(CONF_AREACREATE + " has unknown value of %s - assuming \"" + CONF_AREA_CREATE_MANUAL + "\" and ignoring", areacreate)
             return
         uniqueID = entity.unique_id
         hassArea = entity.get_hass_area
@@ -246,8 +304,8 @@ class DynaliteBridge:
                 return
             areaEntry = self.area_reg._async_is_registered(hassArea)
             if not areaEntry:
-                if areacreate != 'create':
-                    LOGGER.debug("Area %s not registered and " + CONF_AREACREATE + " is not \"create\" - ignoring", hassArea)
+                if areacreate != CONF_AREA_CREATE_AUTO:
+                    LOGGER.debug("Area %s not registered and " + CONF_AREACREATE + " is not \"" + CONF_AREA_CREATE_AUTO + "\" - ignoring", hassArea)
                     return
                 else:
                     LOGGER.debug("Creating new area %s", hassArea)

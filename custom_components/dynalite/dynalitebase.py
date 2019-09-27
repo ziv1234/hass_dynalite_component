@@ -58,7 +58,20 @@ class DynaliteBase(object): # Deriving from Object so it doesn't override the en
     @property
     def get_hass_area(self):
         return self._hass_area
-
+        
+    @callback
+    def add_listener(self, listener):
+        if not getattr(self, '_listeners', False):
+            setattr(self, '_listeners', [])
+        self._listeners.append(listener)
+        
+    @callback
+    def update_listeners(self):
+        if getattr(self, '_listeners', False):
+            for listener in self._listeners:
+                listener()
+                
+        
 class DynaliteChannelBase(DynaliteBase): 
     """Representation of a Dynalite Channel as a Home Assistant Cover."""
 

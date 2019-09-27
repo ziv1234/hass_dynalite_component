@@ -23,7 +23,7 @@ dynalite:
       port: 12345           # Port for gateway typically 12345
       autodiscover: true    # When new presets or channels are activated on the network, add them dynamically
       polltimer: 1          # When there is a command with a fade (e.g. raise blinds), poll interval to find current status until it settles
-      areacreate: create    # Automatically assign Home Assistant areas. Can be either 'create', which creates the areas on the fly, 'assign', which assigns devices to areas if they already exist, and 'manual' which ignores the areas
+      areacreate: auto      # Automatically assign Home Assistant areas. Can be either 'auto', which creates the areas on the fly, 'assign', which assigns devices to areas if they already exist, and 'manual' which ignores the areas
       log_level: DEBUG      # Turn this off when you have things working
 ```
 

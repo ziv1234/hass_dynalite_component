@@ -12,19 +12,15 @@ from homeassistant.components.cover import DEVICE_CLASSES_SCHEMA, DEVICE_CLASS_S
 
 from .const import (DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT,
                     CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER,
-                    CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS)
+                    CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS, CONF_TEMPLATE, CONF_ROOM_OFF, CONF_ROOM_ON, CONF_TRIGGER,
+                    CONF_AREA_CREATE_MANUAL, CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO,
+                    DEFAULT_NAME, DEFAULT_PORT, DEFAULT_LOGGING, DEFAULT_ICON, DEFAULT_CHANNELTYPE, DEFAULT_COVERDURATION, DEFAULT_COVERFACTOR,
+                    DEFAULT_TEMPLATES)
 from .bridge import DynaliteBridge
 
 # Loading the config flow file will register the flow
 from .config_flow import configured_hosts
 
-DEFAULT_NAME = 'dynalite'
-DEFAULT_PORT = 12345
-DEFAULT_LOGGING = 'info'
-DEFAULT_ICON = 'mdi:lightbulb-outline'
-DEFAULT_CHANNELTYPE = 'light'
-DEFAULT_COVERDURATION = 120 # 2 min to open or close cover
-DEFAULT_COVERFACTOR = 1.0 # cover goes from closed(0.0) to open (1.0). If it needs less than the range, use a lower number
 
 PRESET_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME): cv.string,
@@ -52,6 +48,7 @@ CHANNEL_SCHEMA = vol.Schema({
 
 AREA_DATA_SCHEMA = vol.Schema({
     vol.Required(CONF_NAME): cv.string,
+    vol.Optional(CONF_TEMPLATE): cv.string,
     vol.Optional(CONF_FADE): cv.string,
     vol.Optional(CONF_NODEFAULT): cv.boolean,
     vol.Optional(CONF_AREAOVERRIDE): cv.string,
@@ -67,18 +64,32 @@ PLATFORM_DEFAULTS_SCHEMA = vol.Schema({
     vol.Optional(CONF_FADE): cv.string,
 })
 
+TEMPLATE_ROOM_SCHEMA = vol.Schema({
+    vol.Required(CONF_ROOM_ON): cv.slug,
+    vol.Required(CONF_ROOM_OFF): cv.slug,
+})
+
+TEMPLATE_TRIGGER_SCHEMA = cv.slug
+
+TEMPLATE_DATA_SCHEMA = vol.Any(TEMPLATE_ROOM_SCHEMA, TEMPLATE_TRIGGER_SCHEMA) # XXX need to find a way to validate rooms are correct in cv
+
+TEMPLATE_SCHEMA = vol.Schema({
+    cv.string: vol.Any(TEMPLATE_DATA_SCHEMA, None)
+})
+
 BRIDGE_CONFIG_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
     vol.Required(CONF_HOST): cv.string,
     vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
     vol.Optional(CONF_LOGLEVEL, default=DEFAULT_LOGGING): cv.string,
     vol.Optional(CONF_AUTODISCOVER, default=True): cv.boolean,
-    vol.Optional(CONF_AREACREATE, default='manual'): vol.Any('manual', 'assign', 'create'),
+    vol.Optional(CONF_AREACREATE, default=CONF_AREA_CREATE_MANUAL): vol.Any(CONF_AREA_CREATE_MANUAL, CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO),
     vol.Optional(CONF_POLLTIMER, default=1.0): vol.Coerce(float),
     vol.Optional(CONF_AREA): AREA_SCHEMA,
     vol.Optional(CONF_ICON, default=DEFAULT_ICON): cv.string,
     vol.Optional(CONF_DEFAULT): PLATFORM_DEFAULTS_SCHEMA,
     vol.Optional(CONF_PRESET): PRESET_SCHEMA,
+    vol.Optional(CONF_TEMPLATE, default=DEFAULT_TEMPLATES): TEMPLATE_SCHEMA
 })
 
 CONFIG_SCHEMA = vol.Schema(
@@ -129,7 +140,7 @@ async def async_setup(hass, config):
                 DOMAIN,
                 context={"source": config_entries.SOURCE_IMPORT},
                 data={
-                    "host": bridge_conf[CONF_HOST],
+                    CONF_HOST: bridge_conf[CONF_HOST],
                 },
             )
         )
@@ -141,7 +152,7 @@ async def async_setup(hass, config):
 async def async_setup_entry(hass, entry):
     """Set up a bridge from a config entry."""
     LOGGER.debug("__init async_setup_entry %s", pprint.pformat(entry.data))
-    host = entry.data["host"]
+    host = entry.data[CONF_HOST]
     config = hass.data[DATA_CONFIGS].get(host)
 
     if config is None:
@@ -160,5 +171,5 @@ async def async_setup_entry(hass, entry):
 async def async_unload_entry(hass, entry):
     """Unload a config entry."""
     LOGGER.error("async_unload_entry %s", pprint.pformat(entry.data))
-    bridge = hass.data[DOMAIN].pop(entry.data["host"])
+    bridge = hass.data[DOMAIN].pop(entry.data[CONF_HOST])
     return await bridge.async_reset()

@@ -39,10 +39,11 @@ dynalite:
       port: 95
       autodiscover: true
       polltimer: 1
-      areacreate: create
+      areacreate: auto
       area:
         '9':
           name: Office
+          template: room
           channel:
             '1': 
               name: Center
@@ -79,6 +80,12 @@ dynalite:
         '4':
           name: 'Off'
           fade: 0
+      template:
+        'temp':
+          room_on: 2
+          room_off: 5
+        
+          
       default:
         fade: 0
 
