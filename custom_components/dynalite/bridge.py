@@ -7,7 +7,7 @@ from homeassistant.core import callback
 from homeassistant.const import CONF_COVERS, CONF_NAME
 from homeassistant.helpers import device_registry as dr, area_registry as ar
 
-from .dynalite_lib.dynalite import Dynalite
+from dynalite_lib.dynalite import Dynalite
 
 from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_TILTPERCENTAGE,
                     CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS)
