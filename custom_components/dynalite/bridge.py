@@ -16,7 +16,6 @@ from .light import DynaliteChannelLight
 from .switch import DynaliteChannelSwitch, DynalitePresetSwitch, DynaliteRoomPresetSwitch
 from .cover import DynaliteChannelCover, DynaliteChannelCoverWithTilt
 
-
 class DynaliteBridge:
     """Manages a single Dynalite bridge."""
 
@@ -61,7 +60,7 @@ class DynaliteBridge:
                     LOGGER.debug("%s not in " + CONF_TEMPLATE + " using default", template)
                     self.config[CONF_TEMPLATE][template] = DEFAULT_TEMPLATES[template]
                     
-        self._dynalite = Dynalite(config=self.config, loop=hass.loop)
+        self._dynalite = Dynalite(config=self.config, loop=hass.loop, logger=LOGGER)
         eventHandler = self._dynalite.addListener(
             listenerFunction=self.handleEvent)
         eventHandler.monitorEvent('*')
@@ -124,12 +123,12 @@ class DynaliteBridge:
                 self.added_room_switches[int(curArea)] = newEntity
                 try:
                     on_device = self.added_presets[int(curArea)][int(preset_on)]
-                    newEntity.set_device(device_on=on_device)
+                    newEntity.set_device(1, on_device)
                 except KeyError:
                     pass
                 try:
                     off_device = self.added_presets[int(curArea)][int(preset_off)]
-                    newEntity.set_device(device_off=off_device)
+                    newEntity.set_device(2, off_device)
                 except KeyError:
                     pass
                 self.async_add_entities['switch']([newEntity]) 
@@ -141,7 +140,9 @@ class DynaliteBridge:
 
     @callback
     def getHassArea(self, area):
-        areaConfig=self.config[CONF_AREA][str(area)] if str(area) in self.config[CONF_AREA] else None
+        if str(area) not in self.config[CONF_AREA]:
+            return "Area " + str(area)
+        areaConfig=self.config[CONF_AREA][str(area)]
         hassArea = areaConfig[CONF_NAME]
         if CONF_AREAOVERRIDE in areaConfig:
             overrideArea = areaConfig[CONF_AREAOVERRIDE]
@@ -175,18 +176,20 @@ class DynaliteBridge:
         except KeyError:
             hidden = False
 
-        if CONF_TEMPLATE in self.config[CONF_AREA][str(curArea)]: # templates may make some elements hidden
-            template = self.config[CONF_AREA][str(curArea)][CONF_TEMPLATE]
-            if template == CONF_ROOM:
-                hidden = True # in a template room, the presets will all be in the room switch
-                if int(curArea) in self.added_room_switches: # if it is not there yet, it will be added when the room switch will be created
-                    roomSwitch=self.added_room_switches[int(curArea)]
-                    roomTemplate = self.config[CONF_TEMPLATE][CONF_ROOM]
-                    if int(curPreset) == int(roomTemplate[CONF_ROOM_ON]):
-                        roomSwitch.set_device(device_on=newEntity)
-                    if int(curPreset) == int(roomTemplate[CONF_ROOM_OFF]):
-                        roomSwitch.set_device(device_off=newEntity)
-
+        try:
+            template = self.config[CONF_AREA][str(curArea)][CONF_TEMPLATE] # templates may make some elements hidden
+        except KeyError:
+            template = ''
+        if template == CONF_ROOM:
+            hidden = True # in a template room, the presets will all be in the room switch
+            if int(curArea) in self.added_room_switches: # if it is not there yet, it will be added when the room switch will be created
+                roomSwitch=self.added_room_switches[int(curArea)]
+                roomTemplate = self.config[CONF_TEMPLATE][CONF_ROOM]
+                if int(curPreset) == int(roomTemplate[CONF_ROOM_ON]):
+                    roomSwitch.set_device(1, newEntity)
+                if int(curPreset) == int(roomTemplate[CONF_ROOM_OFF]):
+                    roomSwitch.set_device(2, newEntity)
+        
         if hidden:
             newEntity.set_hidden(True)   
         LOGGER.debug("Creating Dynalite preset area=%s preset=%s name=%s" % (curArea, curPreset, curName))

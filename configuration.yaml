@@ -40,7 +40,20 @@ dynalite:
       autodiscover: true
       polltimer: 1
       areacreate: auto
+      log_level: debug
       area:
+        '8':
+          name: Master Bedroom
+          template: room
+          channel:
+            '2': 
+              name: Ceiling
+            '3': 
+              name: Wall
+            '4': 
+              name: Left Reading
+            '6': 
+              name: Bathroom
         '9':
           name: Office
           template: room
@@ -49,7 +62,7 @@ dynalite:
               name: Center
             '2': 
               name: East
-              fade: 2
+              fade: 2 # XXX remove, just leave to check
             '3': 
               name: West
         '10':

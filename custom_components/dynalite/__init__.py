@@ -21,7 +21,6 @@ from .bridge import DynaliteBridge
 # Loading the config flow file will register the flow
 from .config_flow import configured_hosts
 
-
 PRESET_DATA_SCHEMA = vol.Schema({
     vol.Optional(CONF_NAME): cv.string,
     vol.Optional(CONF_FADE): cv.string,

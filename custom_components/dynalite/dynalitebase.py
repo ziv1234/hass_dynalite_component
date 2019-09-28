@@ -80,3 +80,27 @@ class DynaliteChannelBase(DynaliteBase):
         """Return the ID of this cover."""
         return "dynalite_area_"+str(self._area)+"_channel_"+str(self._channel)
 
+class DynaliteDualPresetDevice(DynaliteBase):
+    """Representation of a Dynalite Preset as a Home Assistant Switch."""
+
+    @callback
+    def get_device(self, devnum):
+        return getattr(self, '_device'+str(devnum), False)
+
+    @property
+    def available(self):
+        """Return if dual device is available."""
+        return self.get_device(1) and self.get_device(2)
+
+    @callback
+    def set_device(self, devnum, device):
+        setattr(self, '_device'+str(devnum), device)
+        device.add_listener(self.listener)
+        if self.available:
+            if self.hass: # if it was not added yet to ha, need to update. will be updated when added to ha
+                self.schedule_update_ha_state()
+            
+    @callback
+    def listener(self):
+        if self.hass:
+            self.schedule_update_ha_state()
