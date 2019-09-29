@@ -71,7 +71,7 @@ class DynalitePresetSwitch(DynaliteBase, SwitchDevice):
         """Return true if device is on."""
         new_level = self._device.active
         if new_level != self._level:
-            self.hass.async_create_task(self.update_listeners())
+            self.update_listeners()
         self._level = new_level
         return self._level
 

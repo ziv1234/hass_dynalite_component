@@ -42,6 +42,16 @@ dynalite:
       areacreate: auto
       log_level: debug
       area:
+        '7':
+          name: Girls Room
+          template: room
+          channel:
+            '1': 
+              name: Wall
+            '2': 
+              name: East
+            '3': 
+              name: West
         '8':
           name: Master Bedroom
           template: room
@@ -57,6 +67,9 @@ dynalite:
         '9':
           name: Office
           template: room
+          templateoverride:
+            room_on: 1
+            room_off: 4
           channel:
             '1': 
               name: Center
@@ -67,25 +80,72 @@ dynalite:
               name: West
         '10':
           name: Cinema
+          template: room
           channel:
             '1':
-              type: switch
-              hidden: true
-            '3':
-        '108':
-          name: Office
-          nodefault: true
-          areaoverride: Office
-          channel:
+              name: Spot
             '2':
-              name: Blind
-              type: cover
-              class: blind
-              factor: 0.73
-              tilt: 0.02
-          preset:
+              name: Wall
+            '3':
+              name: Wall Plug
+        '11':
+          name: Cinema Bathroom
+          template: room
+          channel:
             '1':
+              name: AAA
+        '12':
+          name: MAMAD
+          template: room
+          channel:
+            '1': 
+              name: MAMAD
               hidden: true
+        '13':
+          name: Guest Room
+          template: room
+          channel:
+            '1':
+              name: Wall
+            '2':
+              name: Spot
+        '16':
+          name: Back Garden
+          template: room
+          channel:
+            '1':
+              name: Lights
+              hidden: true
+        '108':
+          name: Office Blind
+          template: channelcover
+          areaoverride: Office
+        '110': # Leave one to define explicitly
+          name: Cinema Blind
+          template: channelcover
+          areaoverride: Cinema
+        '111':
+          name: Guest Room Blind
+          template: channelcover
+          areaoverride: Guest Room
+        '165':
+          name: UNKNOWN XXX
+          template: hidden
+        '170':
+          name: UNKNOWN XXX
+          template: hidden
+        '171':
+          name: UNKNOWN XXX
+          template: hidden
+        '183':
+          name: Entrance Gate Internal
+          template: hidden
+        '184':
+          name: Entrance Gate
+          template: trigger
+        '213':
+          name: Cinema Mode
+          template: room
       preset:
         '1':
           name: 'On'
@@ -94,11 +154,16 @@ dynalite:
           name: 'Off'
           fade: 0
       template:
-        'temp':
+        'aaa':
           room_on: 2
           room_off: 5
-        
-          
+        'room':
+          room_off: 4
+        'channelcover':
+          channel: 2
+          class: blind
+          factor: 0.73
+          tilt: 0.02
       default:
         fade: 0
 

@@ -9,7 +9,7 @@ from .const import DOMAIN, LOGGER, DATA_CONFIGS
 
 def async_setup_channel_entry(category, hass, config_entry, async_add_entities):
     """Records the async_add_entities function to add them later when received from Dynalite."""
-    LOGGER.debug("async_setup_entry "+category+" entry = %s", pprint.pformat(config_entry.data))
+    LOGGER.debug("async_setup_entry " + category + " entry = %s", pprint.pformat(config_entry.data))
     bridge = hass.data[DOMAIN][config_entry.data["host"]]
     bridge.async_add_entities[category] = async_add_entities
 
