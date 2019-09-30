@@ -5,7 +5,7 @@ import pprint
 
 from homeassistant.core import callback
 
-from .const import DOMAIN, LOGGER, DATA_CONFIGS
+from .const import DOMAIN, LOGGER
 
 def async_setup_channel_entry(category, hass, config_entry, async_add_entities):
     """Records the async_add_entities function to add them later when received from Dynalite."""

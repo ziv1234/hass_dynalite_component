@@ -1,7 +1,7 @@
 """Support for the Dynalite channels as switches."""
 import asyncio
 import logging
-from .const import DOMAIN, LOGGER, DATA_CONFIGS
+from .const import DOMAIN, LOGGER
 import pprint
 
 from homeassistant.const import CONF_COVERS

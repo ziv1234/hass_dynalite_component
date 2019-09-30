@@ -67,9 +67,9 @@ dynalite:
         '9':
           name: Office
           template: room
-          templateoverride:
-            room_on: 1
-            room_off: 4
+          # templateoverride:
+            # room_on: 1
+            # room_off: 4
           channel:
             '1': 
               name: Center
@@ -120,7 +120,7 @@ dynalite:
           name: Office Blind
           template: channelcover
           areaoverride: Office
-        '110': # Leave one to define explicitly
+        '110':
           name: Cinema Blind
           template: channelcover
           areaoverride: Cinema
@@ -146,6 +146,7 @@ dynalite:
         '213':
           name: Cinema Mode
           template: room
+          areaoverride: Cinema
       preset:
         '1':
           name: 'On'

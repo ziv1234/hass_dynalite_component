@@ -84,8 +84,12 @@ class DynaliteBridge:
                     if str(roomOff) not in self.config[CONF_AREA][curArea][CONF_PRESET]:
                         self.config[CONF_AREA][curArea][CONF_PRESET][str(roomOff)] = {CONF_HIDDENENTITY: True}
                 elif template == CONF_TRIGGER:
+                    if CONF_PRESET not in self.config[CONF_AREA][curArea]:
+                        self.config[CONF_AREA][curArea][CONF_PRESET] = {}
                     self.config[CONF_AREA][curArea][CONF_NODEFAULT] = True
-                    pass # XXX
+                    trigger = self.getTemplateIndex(int(curArea), CONF_TRIGGER, CONF_TRIGGER)
+                    if str(trigger) not in self.config[CONF_AREA][curArea][CONF_PRESET]:
+                        self.config[CONF_AREA][curArea][CONF_PRESET][str(trigger)] = {CONF_HIDDENENTITY: False, CONF_NAME: self.config[CONF_AREA][curArea][CONF_NAME]}
                 elif template == CONF_CHANNELCOVER:
                     self.config[CONF_AREA][curArea][CONF_NODEFAULT] = True
                     curChannel = self.getTemplateIndex(int(curArea), CONF_CHANNELCOVER, CONF_CHANNEL)
@@ -223,6 +227,7 @@ class DynaliteBridge:
         curPreset = event.data['preset']
 
         if str(curArea) not in self.config[CONF_AREA]:
+            LOGGER.debug("adding area " + str(curArea) + " that is not in config")
             self.config[CONF_AREA][str(curArea)] = {CONF_NAME: "Area " + str(curArea)}
         
         try:
@@ -302,6 +307,7 @@ class DynaliteBridge:
         curChannel = event.data['channel']
 
         if str(curArea) not in self.config[CONF_AREA]:
+            LOGGER.debug("adding area " + str(curArea) + " that is not in config")
             self.config[CONF_AREA][str(curArea)] = {CONF_NAME: "Area " + str(curArea)}
         
         try:
@@ -338,6 +344,8 @@ class DynaliteBridge:
         self.added_channels[curArea][curChannel] = newEntity
         if channelConfig and channelConfig[CONF_HIDDENENTITY]:
             newEntity.set_hidden(True)   
+        if self.config[CONF_AREA][str(curArea)].get(CONF_TEMPLATE) == CONF_HIDDENENTITY:
+            newEntity.set_hidden(True)
         LOGGER.debug("Creating Dynalite channel area=%s channel=%s name=%s" % (curArea, curChannel, curName))
 
     @callback
