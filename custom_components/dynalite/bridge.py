@@ -132,10 +132,13 @@ class DynaliteBridge:
             hass.async_create_task(
                 hass.config_entries.async_forward_entry_setup(self.config_entry, category) # XXX maybe handle the race condition if need to use before init. not urgent
             )
-        
-        hass.async_create_task(self.registerRooms())
-
         return True
+
+    @callback
+    def register_add_entities(self, category, async_add_entities):
+        self.async_add_entities[category] = async_add_entities
+        if category == 'switch':
+            self.hass.async_create_task(self.registerRooms())
 
     async def async_reset(self):
         """Reset this bridge to default state.
@@ -178,10 +181,6 @@ class DynaliteBridge:
             pass
 
     async def registerRooms(self):
-        if 'switch' not in self.async_add_entities:
-            LOGGER.debug("XXX switch async_add_entities not ready - requeing")
-            self.hass.async_create_task(self.registerRooms())
-            return
         room_template = self.config[CONF_TEMPLATE][CONF_ROOM] # always defined either by the user or by the defaults
         try:
             preset_on = room_template[CONF_ROOM_ON]
