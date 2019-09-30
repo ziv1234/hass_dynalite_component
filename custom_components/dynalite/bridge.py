@@ -1,6 +1,7 @@
 """Code to handle a Hue bridge."""
 import asyncio
 import pprint
+import copy
 
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -54,7 +55,7 @@ class DynaliteBridge:
             LOGGER.info("invalid host - %s" % host)
             return False
         
-        self.config = hass.data[DATA_CONFIGS][host]
+        self.config = copy.deepcopy(hass.data[DATA_CONFIGS][host])
         # insert the templates
         if CONF_TEMPLATE not in self.config:
             LOGGER.debug(CONF_TEMPLATE + " not in config - using defaults")
@@ -103,8 +104,7 @@ class DynaliteBridge:
                     if self.getTemplateIndex(curArea, CONF_CHANNELCOVER, CONF_TILTPERCENTAGE):
                         self.config[CONF_AREA][curArea][CONF_CHANNEL][str(curChannel)][CONF_TILTPERCENTAGE] = self.getTemplateIndex(curArea, CONF_CHANNELCOVER, CONF_TILTPERCENTAGE)
         LOGGER.debug("bridge async_setup (after templates) - %s" % pprint.pformat(self.config))
-                        
-                    
+        # Configure the dynalite object         
         self._dynalite = Dynalite(config=self.config, loop=hass.loop, logger=LOGGER)
         eventHandler = self._dynalite.addListener(
             listenerFunction=self.handleEvent)
@@ -121,9 +121,9 @@ class DynaliteBridge:
         channelChangeHandler = self._dynalite.addListener(
             listenerFunction=self.handleChannelChange)
         channelChangeHandler.monitorEvent('CHANNEL')
-        # Start Dynalite
         self._dynalite.start()
         self._state = 'Connected'
+
         for category in ['light', 'switch', 'cover']:
             hass.async_create_task(
                 hass.config_entries.async_forward_entry_setup(self.config_entry, category) # XXX maybe handle the race condition if need to use before init. not urgent
