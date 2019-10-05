@@ -39,10 +39,8 @@ DATA_CONFIGS = "dynalite_configs"
 DEFAULT_NAME = 'dynalite'
 DEFAULT_PORT = 12345
 DEFAULT_LOGGING = 'info'
-DEFAULT_ICON = 'mdi:lightbulb-outline'
 DEFAULT_CHANNELTYPE = 'light'
 DEFAULT_COVERCHANNELCLASS = DEVICE_CLASS_SHUTTER
-# XXX DEFAULT_COVERDURATION = 120 # 2 min to open or close cover
 DEFAULT_COVERFACTOR = 1.0 # cover goes from closed(0.0) to open (1.0). If it needs less than the range, use a lower number
 DEFAULT_TEMPLATES = {
     CONF_ROOM:{CONF_ROOM_ON: '1', CONF_ROOM_OFF: '4'}, 

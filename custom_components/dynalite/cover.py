@@ -1,4 +1,4 @@
-"""Support for the Dynalite channels as switches."""
+"""Support for the Dynalite channels as covers."""
 import asyncio
 import logging
 from .const import DOMAIN, LOGGER
@@ -113,28 +113,27 @@ class DynaliteChannelCoverWithTilt(DynaliteChannelCover):
     def current_cover_tilt_position(self):
         return int(self._current_tilt * 100)
     
-    @callback
-    def apply_tilt_diff(self, tilt_diff):
+    async def apply_tilt_diff(self, tilt_diff):
         position_diff = tilt_diff * self._tilt_percentage
         target_position = int(100 * max(0, min(1, self._current_position + position_diff)))
-        self._bridge.hass.async_create_task(self.async_set_cover_position(position=target_position))
+        await self.async_set_cover_position(position=target_position)
     
     async def async_open_cover_tilt(self, **kwargs):
         if self._current_tilt == 1:
             return
         else:
-            self.apply_tilt_diff(1 - self._current_tilt)
+            await self.apply_tilt_diff(1 - self._current_tilt)
 
     async def async_close_cover_tilt(self, **kwargs):
         if self._current_tilt == 0:
             return
         else:
-            self.apply_tilt_diff(0 - self._current_tilt)
+            await self.apply_tilt_diff(0 - self._current_tilt)
 
     async def async_set_cover_tilt_position(self, **kwargs):
         target_position = kwargs[ATTR_TILT_POSITION] / 100
-        self.apply_tilt_diff(target_position - self._current_tilt)
+        await self.apply_tilt_diff(target_position - self._current_tilt)
         
     async def async_stop_cover_tilt(self, **kwargs):
-        self._bridge.hass.async_create_task(self.async_stop_cover())
+        await self.async_stop_cover()
 

@@ -6,7 +6,7 @@ import copy
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_HOST
-from homeassistant.helpers import device_registry as dr, area_registry as ar
+from homeassistant.helpers import device_registry as dr, area_registry as ar, discovery
 
 from dynalite_lib.dynalite import Dynalite
 
@@ -31,12 +31,15 @@ class DynaliteBridge:
         self.hass = hass
         self.area = {}
         self.async_add_entities = {}
+        self.waiting_entities = {}
         self.added_channels = {}
         self.added_presets = {}
         self.added_room_switches = {}
         self.area_reg = None
         self.device_reg = None
         self.config = None
+        self.futures = {}
+        self._state = "Initializing" # XXX
 
     @property
     def host(self):
@@ -50,7 +53,7 @@ class DynaliteBridge:
         self.area_reg = await ar.async_get_registry(hass)
         self.device_reg = await dr.async_get_registry(hass)
         LOGGER.debug("bridge async_setup - %s" % pprint.pformat(self.config_entry.data))
-        
+        self.hass.loop.set_debug(True) # XXX
         if (host not in hass.data[DATA_CONFIGS]):
             LOGGER.info("invalid host - %s" % host)
             return False
@@ -108,6 +111,7 @@ class DynaliteBridge:
                     if self.getTemplateIndex(curArea, CONF_CHANNELCOVER, CONF_TILTPERCENTAGE):
                         self.config[CONF_AREA][curArea][CONF_CHANNEL][str(curChannel)][CONF_TILTPERCENTAGE] = self.getTemplateIndex(curArea, CONF_CHANNELCOVER, CONF_TILTPERCENTAGE)
         LOGGER.debug("bridge async_setup (after templates) - %s" % pprint.pformat(self.config))
+
         # Configure the dynalite object         
         self._dynalite = Dynalite(config=self.config, loop=hass.loop, logger=LOGGER)
         eventHandler = self._dynalite.addListener(
@@ -126,19 +130,32 @@ class DynaliteBridge:
             listenerFunction=self.handleChannelChange)
         channelChangeHandler.monitorEvent('CHANNEL')
         self._dynalite.start()
-        self._state = 'Connected'
+        self._state = 'Connected' # XXX
 
         for category in ['light', 'switch', 'cover']:
             hass.async_create_task(
                 hass.config_entries.async_forward_entry_setup(self.config_entry, category) # XXX maybe handle the race condition if need to use before init. not urgent
             )
+
+        LOGGER.debug("XXX finished dynalite async_start")
         return True
 
     @callback
     def register_add_entities(self, category, async_add_entities):
+        LOGGER.debug("XXX register_add_entities %s", category)
         self.async_add_entities[category] = async_add_entities
+        if category in self.waiting_entities:
+            self.async_add_entities[category](self.waiting_entities[category])
         if category == 'switch':
             self.hass.async_create_task(self.registerRooms())
+
+    def add_entity_when_registered(self, category, entity):
+        if category in self.async_add_entities:
+            self.async_add_entities[category]([entity])
+        else: # handle it later when it is registered
+            if category not in self.waiting_entities:
+                self.waiting_entities[category] = []
+            self.waiting_entities[category].append(entity)
 
     async def async_reset(self):
         """Reset this bridge to default state.
@@ -194,7 +211,7 @@ class DynaliteBridge:
                 self.added_room_switches[int(curArea)] = newEntity
                 self.setPresetIfReady(curArea, CONF_ROOM, CONF_ROOM_ON, 1, newEntity)
                 self.setPresetIfReady(curArea, CONF_ROOM, CONF_ROOM_OFF, 2, newEntity)
-                self.async_add_entities['switch']([newEntity]) 
+                self.add_entity_when_registered('switch', newEntity) 
 
     @callback
     def handleEvent(self, event=None, dynalite=None):
@@ -241,7 +258,7 @@ class DynaliteBridge:
             curName = self.config[CONF_AREA][str(curArea)][CONF_NAME] + " " + presetName # If not explicitly defined, use "areaname presetname"
         curDevice = self._dynalite.devices[CONF_AREA][curArea].preset[curPreset]
         newEntity = DynalitePresetSwitch(curArea, curPreset, curName, self.getHassArea(curArea), self, curDevice)
-        self.async_add_entities['switch']([newEntity])
+        self.add_entity_when_registered('switch', newEntity)
         if (curArea not in self.added_presets):
             self.added_presets[curArea] = {}
         self.added_presets[curArea][curPreset] = newEntity
@@ -311,7 +328,7 @@ class DynaliteBridge:
         
         try:
             curName = self.config[CONF_AREA][str(curArea)][CONF_CHANNEL][str(curChannel)][CONF_NAME] # If the name is explicitly defined, use it
-        except KeyError:
+        except (KeyError, TypeError):
             curName = self.config[CONF_AREA][str(curArea)][CONF_NAME] + " Channel " + str(curChannel) # If not explicitly defined, use "areaname Channel X"
         curDevice = self._dynalite.devices[CONF_AREA][curArea].channel[curChannel]
         try:
@@ -323,10 +340,10 @@ class DynaliteBridge:
         hassArea = self.getHassArea(curArea)
         if channelType == 'light':
             newEntity = DynaliteChannelLight(curArea, curChannel, curName, channelType, hassArea, self, curDevice)
-            self.async_add_entities['light']([newEntity])
+            self.add_entity_when_registered('light', newEntity)
         elif channelType == 'switch':
             newEntity = DynaliteChannelSwitch(curArea, curChannel, curName, channelType, hassArea, self, curDevice)
-            self.async_add_entities['switch']([newEntity])
+            self.add_entity_when_registered('switch', newEntity)
         elif channelType == 'cover':
             factor = channelConfig[CONF_FACTOR] if CONF_FACTOR in channelConfig else DEFAULT_COVERFACTOR
             deviceClass = channelConfig[CONF_CHANNELCLASS] if CONF_CHANNELCLASS in channelConfig else DEFAULT_COVERCHANNELCLASS
@@ -334,7 +351,7 @@ class DynaliteBridge:
                 newEntity = DynaliteChannelCoverWithTilt(curArea, curChannel, curName, channelType, deviceClass, factor, channelConfig[CONF_TILTPERCENTAGE], hassArea, self, curDevice)
             else:
                 newEntity = DynaliteChannelCover(curArea, curChannel, curName, channelType, deviceClass, factor, hassArea, self, curDevice)
-            self.async_add_entities['cover']([newEntity])
+            self.add_entity_when_registered('cover', newEntity)
         else:
             LOGGER.info("unknown chnanel type %s - ignoring", channelType)
             return
@@ -366,19 +383,18 @@ class DynaliteBridge:
         if action == 'report':
             actual_level = (255 - event.data['actual_level']) / 254
             target_level = (255 - event.data['target_level']) / 254
-            try:
-                channelToSet = self.added_channels[int(curArea)][int(curChannel)]
-                channelToSet.update_level(actual_level, target_level)
-                channelToSet.try_schedule_ha() # to only call if it was already added to ha
-            except KeyError:
-                pass
         elif action == 'cmd':
-            try:
-                self.added_channels[int(curArea)][int(curChannel)].try_schedule_ha()
-            except KeyError:
-                pass
+            target_level = (255 - event.data['target_level']) / 254
+            actual_level = target_level # when there is only a "set channel level" command, assume that this is both the actual and the target
         else:
             LOGGER.error("unknown action for channel change %s", action)
+            return
+        try:
+            channelToSet = self.added_channels[int(curArea)][int(curChannel)]
+            channelToSet.update_level(actual_level, target_level)
+            channelToSet.try_schedule_ha() # to only call if it was already added to ha
+        except KeyError:
+            pass
         
     async def entity_added_to_ha(self, entity):
         areacreate = self.config[CONF_AREACREATE].lower()

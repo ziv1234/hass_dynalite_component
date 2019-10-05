@@ -1,4 +1,4 @@
-"""Support for the Philips Hue lights."""
+"""Support for Dynalite channels as lights."""
 import asyncio
 import logging
 from .const import DOMAIN, LOGGER
