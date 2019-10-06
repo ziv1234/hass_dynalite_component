@@ -113,7 +113,7 @@ class DynaliteBridge:
         LOGGER.debug("bridge async_setup (after templates) - %s" % pprint.pformat(self.config))
 
         # Configure the dynalite object         
-        self._dynalite = Dynalite(config=self.config, loop=hass.loop, logger=LOGGER)
+        self._dynalite = Dynalite(config=self.config, loop=hass.loop)
         eventHandler = self._dynalite.addListener(
             listenerFunction=self.handleEvent)
         eventHandler.monitorEvent('*')
