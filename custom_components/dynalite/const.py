@@ -35,6 +35,7 @@ CONF_AREA_CREATE_ASSIGN = 'assign'
 CONF_AREA_CREATE_AUTO = 'auto'
 
 DATA_CONFIGS = "dynalite_configs"
+ENTITY_CATEGORIES = ['light', 'switch', 'cover']
 
 DEFAULT_NAME = 'dynalite'
 DEFAULT_PORT = 12345

@@ -14,24 +14,34 @@ def async_setup_channel_entry(category, hass, config_entry, async_add_entities):
     bridge.register_add_entities(category, async_add_entities)
 
 class DynaliteBase(object): # Deriving from Object so it doesn't override the entity (light, switch, cover, etc.)
+
+    def __init__(self, device, bridge):
+        self._listeners = []
+        self._device = device
+        self._bridge = bridge
+        
     @property
     def name(self):
         """Return the name of the cover."""
-        return self._name
+        return self._device.name
+
+    @property
+    def unique_id(self):
+        return self._device.unique_id
 
     @property
     def available(self):
         """Return if cover is available."""
-        return True
+        return self._device.available
         
     @property
     def hidden(self):
         """Return true if this switch should be hidden from UI."""
-        return getattr(self, '_hidden', False) # if not defined, assume false
+        return self._device.hidden
 
     @callback
     def set_hidden(self, hidden):
-        setattr(self, '_hidden', hidden)
+        return self._device.set_hidden(hidden)
         
     @callback
     async def async_update(self):
@@ -39,68 +49,29 @@ class DynaliteBase(object): # Deriving from Object so it doesn't override the en
 
     @property
     def device_info(self):
-        return {
-            'identifiers': {(DOMAIN, self.unique_id)},
-            'name': self.name,
-            'manufacturer': "Dynalite",
-        }
-
+        return self._device.device_info
+        
     @callback
     def try_schedule_ha(self):
         if self.hass: # if it was not added yet to ha, need to update. will be updated when added to ha
             self.schedule_update_ha_state()
         else:
-            LOGGER.debug("%s not ready - not updating" % self._name)
+            LOGGER.debug("%s not ready - not updating" % self.name)
             
     async def async_added_to_hass(self):
         self.hass.async_create_task(self._bridge.entity_added_to_ha(self))
         
     @property
     def get_hass_area(self):
-        return self._hass_area
+        return self._device.get_master_area
         
     @callback
     def add_listener(self, listener):
-        if not getattr(self, '_listeners', False):
-            setattr(self, '_listeners', [])
         self._listeners.append(listener)
         
     @callback
     def update_listeners(self):
-        if getattr(self, '_listeners', False):
-            for listener in self._listeners:
-                listener()
-                
+        for listener in self._listeners:
+            listener()
+
         
-class DynaliteChannelBase(DynaliteBase): 
-    """Representation of a Dynalite Channel as a Home Assistant Cover."""
-
-    @property
-    def unique_id(self):
-        """Return the ID of this cover."""
-        return "dynalite_area_"+str(self._area)+"_channel_"+str(self._channel)
-
-class DynaliteDualPresetDevice(DynaliteBase):
-    """Representation of a Dynalite Preset as a Home Assistant Switch."""
-
-    @callback
-    def get_device(self, devnum):
-        return getattr(self, '_device'+str(devnum), False)
-
-    @property
-    def available(self):
-        """Return if dual device is available."""
-        return self.get_device(1) and self.get_device(2)
-
-    @callback
-    def set_device(self, devnum, device):
-        setattr(self, '_device'+str(devnum), device)
-        device.add_listener(self.listener)
-        if self.available:
-            if self.hass: # if it was not added yet to ha, need to update. will be updated when added to ha
-                self.schedule_update_ha_state()
-            
-    @callback
-    def listener(self):
-        if self.hass:
-            self.schedule_update_ha_state()

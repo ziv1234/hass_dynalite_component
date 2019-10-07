@@ -3,7 +3,7 @@
   "name": "Direct Integration for Philips Dynalite",
   "config_flow": true,
   "documentation": "",
-  "dependencies": ["mobile_app", "notify"],
+  "dependencies": [],
   "codeowners": ["zivkedem"],
-  "requirements": ["dynalite==0.1.21"]
+  "requirements": ["dynalite_devices==0.1.1"]
 }

@@ -4,7 +4,7 @@ import logging
 from .const import DOMAIN, LOGGER
 import pprint
 
-from .dynalitebase import async_setup_channel_entry, DynaliteChannelBase
+from .dynalitebase import async_setup_channel_entry, DynaliteBase
 
 from homeassistant.components.light import SUPPORT_BRIGHTNESS, ATTR_BRIGHTNESS, Light
 from homeassistant.core import callback
@@ -20,43 +20,28 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Records the async_add_entities function to add them later when received from Dynalite."""
     async_setup_channel_entry('light', hass, config_entry, async_add_entities)
 
-class DynaliteChannelLight(DynaliteChannelBase, Light):
+class DynaliteLight(DynaliteBase, Light):
     """Representation of a Dynalite Channel as a Home Assistant Light."""
 
-    def __init__(self, area, channel, name, type, hass_area, bridge, device):
+    def __init__(self, device, bridge):
         """Initialize the light."""
-        self._area = area
-        self._channel = channel
-        self._name = name
-        self._type = type
-        self._hass_area = hass_area
-        self._level = 0
-        self._bridge = bridge
-        self._device = device
+        super().__init__(device, bridge)
 
     @property
     def brightness(self):
         """Return the brightness of this light between 0..255."""
-        return self._level * 255
+        return self._device.brightness
 
     @property
     def is_on(self):
         """Return true if device is on."""
-        return self._level > 0
+        return self._device.is_on
 
-    @callback
-    def update_level(self, actual_level, target_level):
-        self._level = actual_level
-        
     async def async_turn_on(self, **kwargs):
-        if ATTR_BRIGHTNESS in kwargs:
-            brightness = kwargs[ATTR_BRIGHTNESS] / 255.0
-            self._device.turnOn(brightness=brightness)
-        else:
-            self._device.turnOn()
+        await self._device.async_turn_on(kwargs)
 
     async def async_turn_off(self, **kwargs):
-        self._device.turnOff()
+        await self._device.async_turn_off(kwargs)
 
     @property
     def supported_features(self):
