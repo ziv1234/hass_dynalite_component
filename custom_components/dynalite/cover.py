@@ -3,10 +3,15 @@ import asyncio
 import logging
 from .const import DOMAIN, LOGGER, CONF_COVERS
 
-from homeassistant.components.cover import CoverDevice, ATTR_POSITION, ATTR_TILT_POSITION
+from homeassistant.components.cover import (
+    CoverDevice,
+    ATTR_POSITION,
+    ATTR_TILT_POSITION,
+)
 from homeassistant.core import callback
 
 from .dynalitebase import async_setup_channel_entry, DynaliteBase
+
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Old way.
@@ -17,7 +22,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Records the async_add_entities function to add them later when received from Dynalite."""
-    async_setup_channel_entry('cover', hass, config_entry, async_add_entities)
+    async_setup_channel_entry("cover", hass, config_entry, async_add_entities)
+
 
 class DynaliteCover(DynaliteBase, CoverDevice):
     """Representation of a Dynalite Channel as a Home Assistant Cover."""
@@ -38,11 +44,11 @@ class DynaliteCover(DynaliteBase, CoverDevice):
     @property
     def is_opening(self):
         return self._device.is_opening
-        
+
     @property
     def is_closing(self):
         return self._device.is_closing
-        
+
     @property
     def is_closed(self):
         return self._device.is_closed
@@ -50,7 +56,7 @@ class DynaliteCover(DynaliteBase, CoverDevice):
     async def async_open_cover(self, **kwargs):
         """Open the cover."""
         await self._device.async_open_cover(**kwargs)
-        
+
     async def async_close_cover(self, **kwargs):
         """Open the cover."""
         await self._device.async_close_cover(**kwargs)
@@ -58,10 +64,11 @@ class DynaliteCover(DynaliteBase, CoverDevice):
     async def async_set_cover_position(self, **kwargs):
         """Open the cover."""
         await self._device.async_set_cover_position(**kwargs)
-        
+
     async def async_stop_cover(self, **kwargs):
         """Stop the cover."""
         await self._device.async_stop_cover(**kwargs)
+
 
 class DynaliteCoverWithTilt(DynaliteCover):
     """Representation of a Dynalite Channel as a Home Assistant Cover that uses up and down for tilt."""
@@ -73,7 +80,7 @@ class DynaliteCoverWithTilt(DynaliteCover):
     @property
     def current_cover_tilt_position(self):
         return self._device.current_cover_tilt_position
-    
+
     async def async_open_cover_tilt(self, **kwargs):
         await self._device.async_open_cover_tilt(**kwargs)
 
@@ -82,7 +89,6 @@ class DynaliteCoverWithTilt(DynaliteCover):
 
     async def async_set_cover_tilt_position(self, **kwargs):
         await self._device.async_set_cover_tilt_position(**kwargs)
-    
+
     async def async_stop_cover_tilt(self, **kwargs):
         await self._device.async_stop_cover_tilt(**kwargs)
-

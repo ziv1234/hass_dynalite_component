@@ -11,7 +11,8 @@ from homeassistant.core import callback
 
 from .const import DOMAIN, LOGGER
 
-import pprint # XXX Remove or put in the right place
+import pprint  # XXX Remove or put in the right place
+
 
 @callback
 def configured_hosts(hass):
@@ -19,6 +20,7 @@ def configured_hosts(hass):
     return set(
         entry.data["host"] for entry in hass.config_entries.async_entries(DOMAIN)
     )
+
 
 class DynaliteFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a Dynalite config flow."""
@@ -36,7 +38,7 @@ class DynaliteFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_init(self, user_input=None):
         """Handle a flow start."""
-        LOGGER.error("async_step_init - not sure when this happens") # XXX
+        LOGGER.error("async_step_init - not sure when this happens")  # XXX
         if user_input is not None:
             self.host = self.context["host"] = user_input["host"]
             return await self._entry_from_bridge(host)
@@ -57,14 +59,16 @@ class DynaliteFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Return a config entry from an initialized bridge."""
         LOGGER.debug("entry_from_bridge - %s" % pprint.pformat(host))
         # Remove all other entries of hubs with same ID or host
-        
+
         same_hub_entries = [
             entry.entry_id
             for entry in self.hass.config_entries.async_entries(DOMAIN)
             if entry.data["host"] == host
         ]
 
-        LOGGER.debug("entry_from_bridge same_hub - %s" % pprint.pformat(same_hub_entries))
+        LOGGER.debug(
+            "entry_from_bridge same_hub - %s" % pprint.pformat(same_hub_entries)
+        )
 
         if same_hub_entries:
             await asyncio.wait(
@@ -74,7 +78,4 @@ class DynaliteFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 ]
             )
 
-        return self.async_create_entry(
-            title=host,
-            data={"host": host},
-        )
+        return self.async_create_entry(title=host, data={"host": host})

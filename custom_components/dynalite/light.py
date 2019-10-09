@@ -8,6 +8,7 @@ from .dynalitebase import async_setup_channel_entry, DynaliteBase
 from homeassistant.components.light import SUPPORT_BRIGHTNESS, ATTR_BRIGHTNESS, Light
 from homeassistant.core import callback
 
+
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Old way.
 
@@ -17,7 +18,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Records the async_add_entities function to add them later when received from Dynalite."""
-    async_setup_channel_entry('light', hass, config_entry, async_add_entities)
+    async_setup_channel_entry("light", hass, config_entry, async_add_entities)
+
 
 class DynaliteLight(DynaliteBase, Light):
     """Representation of a Dynalite Channel as a Home Assistant Light."""
