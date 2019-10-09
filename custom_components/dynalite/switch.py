@@ -2,7 +2,6 @@
 import asyncio
 import logging
 from .const import DOMAIN, LOGGER
-import pprint
 
 from .dynalitebase import async_setup_channel_entry, DynaliteBase
 from homeassistant.components.switch import SwitchDevice

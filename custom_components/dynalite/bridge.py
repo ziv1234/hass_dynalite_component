@@ -5,18 +5,22 @@ import copy
 
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.const import CONF_COVERS, CONF_NAME, CONF_HOST
 from homeassistant.helpers import device_registry as dr, area_registry as ar, discovery
+
+from .const import (
+    CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_TILTPERCENTAGE,
+    CONF_AREAOVERRIDE, CONF_CHANNELCLASS, CONF_TEMPLATE, CONF_ROOM_ON, CONF_ROOM_OFF, DEFAULT_TEMPLATES, CONF_ROOM, 
+    DEFAULT_CHANNELTYPE, CONF_TEMPLATEOVERRIDE, DEFAULT_COVERCHANNELCLASS, DEFAULT_COVERFACTOR, CONF_TRIGGER,
+    CONF_CHANNELCOVER, CONF_NODEFAULT, DOMAIN, DATA_CONFIGS, LOGGER, CONF_BRIDGES, CONF_AREACREATE, CONF_HOST,
+    CONF_AREA_CREATE_MANUAL, CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO, ENTITY_CATEGORIES, CONF_COVERS, CONF_NAME, 
+    CONF_ALL
+)
 
 from dynalite_devices_lib.dynalite_devices import DynaliteDevices
 
-from .const import (DOMAIN, LOGGER, CONF_BRIDGES, DATA_CONFIGS, CONF_CHANNEL, CONF_AREA, CONF_PRESET, CONF_FACTOR, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_TILTPERCENTAGE,
-                    CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS, CONF_TEMPLATE, CONF_ROOM_ON, CONF_ROOM_OFF, DEFAULT_TEMPLATES, CONF_ROOM, DEFAULT_CHANNELTYPE,
-                    CONF_AREA_CREATE_MANUAL, CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO, CONF_TEMPLATEOVERRIDE, DEFAULT_COVERCHANNELCLASS, DEFAULT_COVERFACTOR, CONF_TRIGGER,
-                    CONF_CHANNELCOVER, CONF_NODEFAULT, ENTITY_CATEGORIES)
 from .light import DynaliteLight
 from .switch import DynaliteSwitch
-from .cover import DynaliteCover
+from .cover import DynaliteCover, DynaliteCoverWithTilt
 
 class BridgeError(Exception):
     def __init__(self, message):
@@ -49,11 +53,11 @@ class DynaliteBridge:
         self.device_reg = await dr.async_get_registry(hass)
         LOGGER.debug("component bridge async_setup - %s" % pprint.pformat(self.config_entry.data))
         self.hass.loop.set_debug(True) # XXX
-        if (host not in hass.data[DATA_CONFIGS]):
+        if (host not in hass.data[DOMAIN][DATA_CONFIGS]):
             LOGGER.info("invalid host - %s" % host)
             return False
         
-        self.config = hass.data[DATA_CONFIGS][host]
+        self.config = hass.data[DOMAIN][DATA_CONFIGS][host]
 
         # Configure the dynalite devices
         self._dynalite_devices = DynaliteDevices(config=self.config, loop=hass.loop, newDeviceFunc=self.addDevices, updateDeviceFunc=self.updateDevice)
@@ -76,20 +80,21 @@ class DynaliteBridge:
 
         for device in devices:
             category = device.category
-            LOGGER.debug("XXX category %s device %s" % (category, device))
             if category == 'light':
                 entity = DynaliteLight(device, self)
             elif category == 'switch':
                 entity = DynaliteSwitch(device, self)
             elif category == 'cover':
-                if (getattr(device, 'current_cover_tilt_position', False)):
+                try:
+                    temp = device.current_cover_tilt_position # will throw AttributeError if not implemented in class
+                    LOGGER.debug("XXX with tilt device=%s", device)
                     entity = DynaliteCoverWithTilt(device, self)
-                else:
+                except AttributeError:
+                    LOGGER.debug("XXX without tilt device=%s", device)
                     entity = DynaliteCover(device, self)
             else:
                 LOGGER.warning("Illegal device category %s", category)
                 continue
-            LOGGER.debug("XXX created entity %s", entity)
             added_entities[category].append(entity)
             self.all_entities[entity.unique_id] = entity
             
@@ -99,9 +104,13 @@ class DynaliteBridge:
     
     @callback
     def updateDevice(self, device):
-        uid = device.unique_id
-        if uid in self.all_entities:
-            self.all_entities[uid].try_schedule_ha()
+        if device == CONF_ALL:
+            for uid in self.all_entities:
+                self.all_entities[uid].try_schedule_ha()
+        else:
+            uid = device.unique_id
+            if uid in self.all_entities:
+                self.all_entities[uid].try_schedule_ha()
     
     @callback
     def register_add_entities(self, category, async_add_entities):

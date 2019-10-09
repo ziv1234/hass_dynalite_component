@@ -2,7 +2,6 @@
 import asyncio
 import logging
 from .const import DOMAIN, LOGGER
-import pprint
 
 from .dynalitebase import async_setup_channel_entry, DynaliteBase
 
@@ -38,10 +37,10 @@ class DynaliteLight(DynaliteBase, Light):
         return self._device.is_on
 
     async def async_turn_on(self, **kwargs):
-        await self._device.async_turn_on(kwargs)
+        await self._device.async_turn_on(**kwargs)
 
     async def async_turn_off(self, **kwargs):
-        await self._device.async_turn_off(kwargs)
+        await self._device.async_turn_off(**kwargs)
 
     @property
     def supported_features(self):

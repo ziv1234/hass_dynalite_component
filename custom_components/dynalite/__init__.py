@@ -6,16 +6,16 @@ import pprint
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_PORT, CONF_NAME, CONF_COVERS
 from homeassistant.helpers import config_validation as cv
 from homeassistant.components.cover import DEVICE_CLASSES_SCHEMA
 
-from .const import (DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT,
-                    CONF_FADE, CONF_DEFAULT, CONF_CHANNELTYPE, CONF_HIDDENENTITY, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_POLLTIMER,
-                    CONF_AREACREATE, CONF_AREAOVERRIDE, CONF_CHANNELCLASS, CONF_TEMPLATE, CONF_ROOM_OFF, CONF_ROOM_ON, CONF_TRIGGER,
-                    CONF_AREA_CREATE_MANUAL, CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO, CONF_TEMPLATEOVERRIDE,
-                    DEFAULT_NAME, DEFAULT_PORT, DEFAULT_LOGGING, DEFAULT_CHANNELTYPE, DEFAULT_COVERFACTOR,
-                    DEFAULT_TEMPLATES, CONF_ROOM)
+from .const import (
+    DOMAIN, CONF_BRIDGES, DATA_CONFIGS, LOGGER, CONF_AREACREATE, CONF_AREA_CREATE_MANUAL, CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO,
+    CONF_LOGLEVEL, CONF_AREA, CONF_PRESET, CONF_CHANNEL, CONF_NODEFAULT, CONF_FADE, CONF_DEFAULT, CONF_POLLTIMER, CONF_CHANNELTYPE, 
+    CONF_HIDDENENTITY, CONF_FACTOR, CONF_TILTPERCENTAGE, CONF_AUTODISCOVER, CONF_AREAOVERRIDE, CONF_CHANNELCLASS, CONF_TEMPLATE, 
+    CONF_ROOM_OFF, CONF_ROOM_ON, CONF_TRIGGER, CONF_TEMPLATEOVERRIDE, DEFAULT_NAME, DEFAULT_PORT, DEFAULT_LOGGING, DEFAULT_CHANNELTYPE,
+    DEFAULT_COVERFACTOR, DEFAULT_TEMPLATES, CONF_ROOM, CONF_HOST, CONF_PORT, CONF_NAME, CONF_COVERS
+)                    
 from .bridge import DynaliteBridge
 
 # Loading the config flow file will register the flow
@@ -156,7 +156,7 @@ async def async_setup(hass, config):
         conf = {}
 
     hass.data[DOMAIN] = {}
-    hass.data[DATA_CONFIGS] = {}
+    hass.data[DOMAIN][DATA_CONFIGS] = {}
 
     configured = configured_hosts(hass)
 
@@ -171,7 +171,7 @@ async def async_setup(hass, config):
         LOGGER.debug("async_setup host=%s conf=%s" % (host, pprint.pformat(bridge_conf)))
 
         # Store config in hass.data so the config entry can find it
-        hass.data[DATA_CONFIGS][host] = bridge_conf
+        hass.data[DOMAIN][DATA_CONFIGS][host] = bridge_conf
 
         if host in configured:
             LOGGER.debug("async_setup host=%s already configured" % host)
@@ -195,7 +195,7 @@ async def async_setup_entry(hass, entry):
     """Set up a bridge from a config entry."""
     LOGGER.debug("__init async_setup_entry %s", pprint.pformat(entry.data))
     host = entry.data[CONF_HOST]
-    config = hass.data[DATA_CONFIGS].get(host)
+    config = hass.data[DOMAIN][DATA_CONFIGS].get(host)
 
     if config is None:
         LOGGER.error("__init async_setup_entry empty config for host %s", host)
