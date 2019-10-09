@@ -44,7 +44,7 @@ from .const import (
     CONF_ALL,
 )
 
-from dynalite_devices_lib.dynalite_devices import DynaliteDevices
+from dynalite_devices_lib import DynaliteDevices
 
 from .light import DynaliteLight
 from .switch import DynaliteSwitch

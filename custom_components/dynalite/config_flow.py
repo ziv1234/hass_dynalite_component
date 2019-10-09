@@ -2,6 +2,7 @@
 import asyncio
 import json
 import os
+import pprint
 
 import async_timeout
 import voluptuous as vol
@@ -10,8 +11,6 @@ from homeassistant import config_entries
 from homeassistant.core import callback
 
 from .const import DOMAIN, LOGGER
-
-import pprint  # XXX Remove or put in the right place
 
 
 @callback

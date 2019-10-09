@@ -6,7 +6,7 @@ from homeassistant.components.cover import DEVICE_CLASS_SHUTTER
 LOGGER = logging.getLogger(__package__)
 DOMAIN = "dynalite"
 
-from dynalite_devices_lib.const import (
+from dynalite_devices_lib import (
     CONF_CHANNEL,
     CONF_AREA,
     CONF_PRESET,
