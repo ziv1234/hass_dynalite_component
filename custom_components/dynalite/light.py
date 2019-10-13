@@ -1,23 +1,16 @@
 """Support for Dynalite channels as lights."""
-import asyncio
-import logging
-from .const import DOMAIN, LOGGER
-
 from .dynalitebase import async_setup_channel_entry, DynaliteBase
 
-from homeassistant.components.light import SUPPORT_BRIGHTNESS, ATTR_BRIGHTNESS, Light
-from homeassistant.core import callback
+from homeassistant.components.light import SUPPORT_BRIGHTNESS, Light
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Old way.
-
-    """
+    """Old way."""
     pass
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Records the async_add_entities function to add them later when received from Dynalite."""
+    """Record the async_add_entities function to add them later when received from Dynalite."""
     async_setup_channel_entry("light", hass, config_entry, async_add_entities)
 
 
@@ -39,9 +32,11 @@ class DynaliteLight(DynaliteBase, Light):
         return self._device.is_on
 
     async def async_turn_on(self, **kwargs):
+        """Turn the light on."""
         await self._device.async_turn_on(**kwargs)
 
     async def async_turn_off(self, **kwargs):
+        """Turn the light off."""
         await self._device.async_turn_off(**kwargs)
 
     @property

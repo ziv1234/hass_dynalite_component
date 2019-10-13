@@ -1,14 +1,12 @@
 """Config flow to configure Philips Hue."""
 import asyncio
-import json
-import os
 import pprint
 
-import async_timeout
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.const import CONF_HOST
 
 from .const import DOMAIN, LOGGER
 
@@ -17,7 +15,7 @@ from .const import DOMAIN, LOGGER
 def configured_hosts(hass):
     """Return a set of the configured hosts."""
     return set(
-        entry.data["host"] for entry in hass.config_entries.async_entries(DOMAIN)
+        entry.data[CONF_HOST] for entry in hass.config_entries.async_entries(DOMAIN)
     )
 
 
@@ -37,21 +35,19 @@ class DynaliteFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_init(self, user_input=None):
         """Handle a flow start."""
-        LOGGER.error("async_step_init - not sure when this happens")  # XXX
         if user_input is not None:
-            self.host = self.context["host"] = user_input["host"]
-            return await self._entry_from_bridge(host)
+            self.host = self.context[CONF_HOST] = user_input[CONF_HOST]
+            return await self._entry_from_bridge(self.host)
+        hosts = configured_hosts(self.hass)
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema({vol.Required("host"): vol.In(hosts)}),
+            data_schema=vol.Schema({vol.Required(CONF_HOST): vol.In(hosts)}),
         )
 
     async def async_step_import(self, import_info):
-        """Import a new bridge as a config entry.
-
-        """
+        """Import a new bridge as a config entry."""
         LOGGER.debug("async_step_import - %s" % pprint.pformat(import_info))
-        host = self.context["host"] = import_info["host"]
+        host = self.context[CONF_HOST] = import_info[CONF_HOST]
         return await self._entry_from_bridge(host)
 
     async def _entry_from_bridge(self, host):
@@ -62,7 +58,7 @@ class DynaliteFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         same_hub_entries = [
             entry.entry_id
             for entry in self.hass.config_entries.async_entries(DOMAIN)
-            if entry.data["host"] == host
+            if entry.data[CONF_HOST] == host
         ]
 
         LOGGER.debug(
@@ -77,4 +73,4 @@ class DynaliteFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 ]
             )
 
-        return self.async_create_entry(title=host, data={"host": host})
+        return self.async_create_entry(title=host, data={CONF_HOST: host})

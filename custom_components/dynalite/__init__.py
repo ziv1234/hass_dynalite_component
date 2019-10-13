@@ -1,12 +1,9 @@
 """Support for the Dynalite networks."""
-import ipaddress
-import logging
-import pprint
-
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.helpers import config_validation as cv
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_NAME
 from homeassistant.components.cover import DEVICE_CLASSES_SCHEMA
 
 from .const import (
@@ -18,38 +15,39 @@ from .const import (
     CONF_AREA_CREATE_MANUAL,
     CONF_AREA_CREATE_ASSIGN,
     CONF_AREA_CREATE_AUTO,
-    CONF_LOGLEVEL,
-    CONF_AREA,
-    CONF_PRESET,
-    CONF_CHANNEL,
-    CONF_NODEFAULT,
-    CONF_FADE,
-    CONF_DEFAULT,
-    CONF_POLLTIMER,
+    DEFAULT_NAME,
+    DEFAULT_PORT,
+)
+
+from dynalite_devices_lib import (
+    CONF_FACTOR,
     CONF_CHANNELTYPE,
     CONF_HIDDENENTITY,
-    CONF_FACTOR,
     CONF_TILTPERCENTAGE,
-    CONF_AUTODISCOVER,
     CONF_AREAOVERRIDE,
     CONF_CHANNELCLASS,
     CONF_TEMPLATE,
-    CONF_ROOM_OFF,
     CONF_ROOM_ON,
-    CONF_TRIGGER,
-    CONF_TEMPLATEOVERRIDE,
-    DEFAULT_NAME,
-    DEFAULT_PORT,
-    DEFAULT_LOGGING,
-    DEFAULT_CHANNELTYPE,
-    DEFAULT_COVERFACTOR,
+    CONF_ROOM_OFF,
     DEFAULT_TEMPLATES,
     CONF_ROOM,
-    CONF_HOST,
-    CONF_PORT,
-    CONF_NAME,
-    CONF_COVERS,
+    DEFAULT_CHANNELTYPE,
+    CONF_TEMPLATEOVERRIDE,
+    CONF_TRIGGER,
 )
+
+from dynalite_lib import (
+    CONF_CHANNEL,
+    CONF_AREA,
+    CONF_PRESET,
+    CONF_NODEFAULT,
+    CONF_LOGLEVEL,
+    CONF_FADE,
+    CONF_DEFAULT,
+    CONF_POLLTIMER,
+    CONF_AUTODISCOVER,
+)
+
 from .bridge import DynaliteBridge
 
 # Loading the config flow file will register the flow
@@ -88,6 +86,7 @@ PRESET_SCHEMA = vol.Schema({cv.slug: vol.Any(PRESET_DATA_SCHEMA, None)})
 
 
 def check_channel_data_schema(conf):
+    """Check that a channel config is valid."""
     if conf[CONF_CHANNELTYPE] != "cover":
         for param in [CONF_CHANNELCLASS, CONF_FACTOR, CONF_TILTPERCENTAGE]:
             if param in conf:
@@ -119,11 +118,12 @@ CHANNEL_SCHEMA = vol.Schema({cv.slug: vol.Any(CHANNEL_DATA_SCHEMA, None)})
 
 
 def check_area_data_schema(conf):
+    """Verify that an area config is valid."""
     if CONF_TEMPLATE in conf and conf[CONF_TEMPLATE] not in DEFAULT_TEMPLATES:
         raise vol.Invalid(
             conf[CONF_TEMPLATE]
             + " is not a valid template name. Possible names are: "
-            + pprint.pformat(DEFAULT_TEMPLATE_NAMES)
+            + str(DEFAULT_TEMPLATE_NAMES)
         )
 
     if CONF_TEMPLATEOVERRIDE in conf and False:
@@ -172,7 +172,7 @@ BRIDGE_CONFIG_SCHEMA = vol.Schema(
         vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Required(CONF_HOST): cv.string,
         vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-        vol.Optional(CONF_LOGLEVEL, default=DEFAULT_LOGGING): cv.string,
+        vol.Optional(CONF_LOGLEVEL): cv.string,
         vol.Optional(CONF_AUTODISCOVER, default=True): cv.boolean,
         vol.Optional(CONF_AREACREATE, default=CONF_AREA_CREATE_MANUAL): vol.Any(
             CONF_AREA_CREATE_MANUAL, CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO
@@ -203,7 +203,7 @@ async def async_setup(hass, config):
     """Set up the Dynalite platform."""
 
     conf = config.get(DOMAIN)
-    LOGGER.debug("Setting up dynalite component config = %s", pprint.pformat(conf))
+    LOGGER.debug("Setting up dynalite component config = %s", conf)
 
     if conf is None:
         conf = {}
@@ -221,9 +221,7 @@ async def async_setup(hass, config):
 
     for bridge_conf in bridges:
         host = bridge_conf[CONF_HOST]
-        LOGGER.debug(
-            "async_setup host=%s conf=%s" % (host, pprint.pformat(bridge_conf))
-        )
+        LOGGER.debug("async_setup host=%s conf=%s" % (host, bridge_conf))
 
         # Store config in hass.data so the config entry can find it
         hass.data[DOMAIN][DATA_CONFIGS][host] = bridge_conf
@@ -245,7 +243,7 @@ async def async_setup(hass, config):
 
 async def async_setup_entry(hass, entry):
     """Set up a bridge from a config entry."""
-    LOGGER.debug("__init async_setup_entry %s", pprint.pformat(entry.data))
+    LOGGER.debug("__init async_setup_entry %s", entry.data)
     host = entry.data[CONF_HOST]
     config = hass.data[DOMAIN][DATA_CONFIGS].get(host)
 
@@ -263,6 +261,6 @@ async def async_setup_entry(hass, entry):
 
 async def async_unload_entry(hass, entry):
     """Unload a config entry."""
-    LOGGER.error("async_unload_entry %s", pprint.pformat(entry.data))
+    LOGGER.error("async_unload_entry %s", entry.data)
     bridge = hass.data[DOMAIN].pop(entry.data[CONF_HOST])
     return await bridge.async_reset()

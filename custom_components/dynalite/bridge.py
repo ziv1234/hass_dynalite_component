@@ -1,50 +1,23 @@
 """Code to handle a Dynalite bridge."""
 import asyncio
 import pprint
-import copy
 
-from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers import device_registry as dr, area_registry as ar, discovery
+from homeassistant.helpers import device_registry as dr, area_registry as ar
+from homeassistant.const import CONF_HOST
 
 from .const import (
-    CONF_CHANNEL,
-    CONF_AREA,
-    CONF_PRESET,
-    CONF_FACTOR,
-    CONF_CHANNELTYPE,
-    CONF_HIDDENENTITY,
-    CONF_TILTPERCENTAGE,
-    CONF_AREAOVERRIDE,
-    CONF_CHANNELCLASS,
-    CONF_TEMPLATE,
-    CONF_ROOM_ON,
-    CONF_ROOM_OFF,
-    DEFAULT_TEMPLATES,
-    CONF_ROOM,
-    DEFAULT_CHANNELTYPE,
-    CONF_TEMPLATEOVERRIDE,
-    DEFAULT_COVERCHANNELCLASS,
-    DEFAULT_COVERFACTOR,
-    CONF_TRIGGER,
-    CONF_CHANNELCOVER,
-    CONF_NODEFAULT,
     DOMAIN,
     DATA_CONFIGS,
     LOGGER,
-    CONF_BRIDGES,
     CONF_AREACREATE,
-    CONF_HOST,
     CONF_AREA_CREATE_MANUAL,
     CONF_AREA_CREATE_ASSIGN,
     CONF_AREA_CREATE_AUTO,
     ENTITY_CATEGORIES,
-    CONF_COVERS,
-    CONF_NAME,
-    CONF_ALL,
 )
-
-from dynalite_devices_lib import DynaliteDevices
+from dynalite_devices_lib import DynaliteDevices, DOMAIN as DYNDOMAIN
+from dynalite_lib import CONF_ALL
 
 from .light import DynaliteLight
 from .switch import DynaliteSwitch
@@ -52,7 +25,10 @@ from .cover import DynaliteCover, DynaliteCoverWithTilt
 
 
 class BridgeError(Exception):
+    """Class to throw exceptions from DynaliteBridge."""
+
     def __init__(self, message):
+        """Initialize the exception."""
         self.message = message
 
 
@@ -69,6 +45,7 @@ class DynaliteBridge:
         self.all_entities = {}
         self.area_reg = None
         self.device_reg = None
+        self.available = True
 
     @property
     def host(self):
@@ -84,7 +61,6 @@ class DynaliteBridge:
         LOGGER.debug(
             "component bridge async_setup - %s" % pprint.pformat(self.config_entry.data)
         )
-        self.hass.loop.set_debug(True)  # XXX
         if host not in hass.data[DOMAIN][DATA_CONFIGS]:
             LOGGER.info("invalid host - %s" % host)
             return False
@@ -104,34 +80,29 @@ class DynaliteBridge:
             hass.async_create_task(
                 hass.config_entries.async_forward_entry_setup(
                     self.config_entry, category
-                )  # XXX maybe handle the race condition if need to use before init. not urgent
+                )
             )
 
-        LOGGER.debug("XXX finished dynalite async_setup")
         return True
 
     @callback
     def addDevices(self, devices):
-        LOGGER.debug("XXX addDevices %s", devices)
+        """Call when devices should be added to home assistant."""
         added_entities = {}
         for category in ENTITY_CATEGORIES:
             added_entities[category] = []
 
         for device in devices:
+            entity = None
             category = device.category
             if category == "light":
                 entity = DynaliteLight(device, self)
             elif category == "switch":
                 entity = DynaliteSwitch(device, self)
             elif category == "cover":
-                try:
-                    temp = (
-                        device.current_cover_tilt_position
-                    )  # will throw AttributeError if not implemented in class
-                    LOGGER.debug("XXX with tilt device=%s", device)
+                if device.has_tilt:
                     entity = DynaliteCoverWithTilt(device, self)
-                except AttributeError:
-                    LOGGER.debug("XXX without tilt device=%s", device)
+                else:
                     entity = DynaliteCover(device, self)
             else:
                 LOGGER.warning("Illegal device category %s", category)
@@ -145,7 +116,12 @@ class DynaliteBridge:
 
     @callback
     def updateDevice(self, device):
+        """Call when a device or all devices should be updated."""
         if device == CONF_ALL:
+            if self._dynalite_devices.available:
+                LOGGER.info("Connected to dynalite host")
+            else:
+                LOGGER.info("Disconnected from dynalite host")
             for uid in self.all_entities:
                 self.all_entities[uid].try_schedule_ha()
         else:
@@ -155,12 +131,13 @@ class DynaliteBridge:
 
     @callback
     def register_add_entities(self, category, async_add_entities):
-        LOGGER.debug("XXX register_add_entities %s", category)
+        """Add an async_add_entities for a category."""
         self.async_add_entities[category] = async_add_entities
         if category in self.waiting_entities:
             self.async_add_entities[category](self.waiting_entities[category])
 
     def add_entities_when_registered(self, category, entities):
+        """Add the entities to ha if async_add_entities was registered, otherwise queue until it is."""
         if not entities:
             return
         if category in self.async_add_entities:
@@ -176,20 +153,22 @@ class DynaliteBridge:
         Will cancel any scheduled setup retry and will unload
         the config entry.
         """
-        # XXX don't think it is working - not sure how to test it:
-        # so throwing an exception
-        raise BridgeError(
-            "Dynalite async_reset called. not sure it is well implemented"
-        )
         results = await asyncio.gather(
             self.hass.config_entries.async_forward_entry_unload(
                 self.config_entry, "light"
-            )
+            ),
+            self.hass.config_entries.async_forward_entry_unload(
+                self.config_entry, "switch"
+            ),
+            self.hass.config_entries.async_forward_entry_unload(
+                self.config_entry, "cover"
+            ),
         )
         # None and True are OK
         return False not in results
 
     async def entity_added_to_ha(self, entity):
+        """Call when an entity is added to HA so we can set its area."""
         areacreate = self.config[CONF_AREACREATE].lower()
         if areacreate == CONF_AREA_CREATE_MANUAL:
             LOGGER.debug("area assignment set to manual - ignoring")
@@ -207,9 +186,7 @@ class DynaliteBridge:
         hassArea = entity.get_hass_area
         if hassArea != "":
             LOGGER.debug("assigning hass area %s to entity %s" % (hassArea, uniqueID))
-            device = self.device_reg.async_get_device(
-                {("dynalite-devices", uniqueID)}, ()
-            )  # XXX
+            device = self.device_reg.async_get_device({(DYNDOMAIN, uniqueID)}, ())
             if not device:
                 LOGGER.error("uniqueID %s has no device ID", uniqueID)
                 return
