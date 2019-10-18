@@ -1,6 +1,9 @@
 """Code to handle a Dynalite bridge."""
-import asyncio
 import pprint
+import asyncio
+
+from dynalite_devices_lib import DynaliteDevices, DOMAIN as DYNDOMAIN
+from dynalite_lib import CONF_ALL
 
 from homeassistant.core import callback
 from homeassistant.helpers import device_registry as dr, area_registry as ar
@@ -11,13 +14,12 @@ from .const import (
     DATA_CONFIGS,
     LOGGER,
     CONF_AREACREATE,
-    CONF_AREA_CREATE_MANUAL,
-    CONF_AREA_CREATE_ASSIGN,
-    CONF_AREA_CREATE_AUTO,
+    CONF_AREACREATE_MANUAL,
+    CONF_AREACREATE_ASSIGN,
+    CONF_AREACREATE_AUTO,
     ENTITY_CATEGORIES,
 )
-from dynalite_devices_lib import DynaliteDevices, DOMAIN as DYNDOMAIN
-from dynalite_lib import CONF_ALL
+
 
 from .light import DynaliteLight
 from .switch import DynaliteSwitch
@@ -29,6 +31,7 @@ class BridgeError(Exception):
 
     def __init__(self, message):
         """Initialize the exception."""
+        super().__init__()
         self.message = message
 
 
@@ -36,7 +39,7 @@ class DynaliteBridge:
     """Manages a single Dynalite bridge."""
 
     def __init__(self, hass, config_entry):
-        """Initialize the system."""
+        """Initialize the system based on host parameter."""
         self.config_entry = config_entry
         self.hass = hass
         self.area = {}
@@ -45,55 +48,45 @@ class DynaliteBridge:
         self.all_entities = {}
         self.area_reg = None
         self.device_reg = None
-        self.available = True
-
-    @property
-    def host(self):
-        """Return the host of this bridge."""
-        return self.config_entry.data[CONF_HOST]
+        self.config = None
+        self.host = config_entry.data[CONF_HOST]
+        if self.host not in hass.data[DOMAIN][DATA_CONFIGS]:
+            LOGGER.info("invalid host - %s", self.host)
+            raise BridgeError("invalid host - " + self.host)
+        self.config = hass.data[DOMAIN][DATA_CONFIGS][self.host]
+        # Configure the dynalite devices
+        self.dynalite_devices = DynaliteDevices(
+            config=self.config,
+            loop=hass.loop,
+            newDeviceFunc=self.add_devices,
+            updateDeviceFunc=self.update_device,
+        )
 
     async def async_setup(self, tries=0):
         """Set up a Dynalite bridge based on host parameter."""
-        host = self.host
-        hass = self.hass
-        self.area_reg = await ar.async_get_registry(hass)
-        self.device_reg = await dr.async_get_registry(hass)
         LOGGER.debug(
             "component bridge async_setup - %s" % pprint.pformat(self.config_entry.data)
         )
-        if host not in hass.data[DOMAIN][DATA_CONFIGS]:
-            LOGGER.info("invalid host - %s" % host)
-            return False
-
-        self.config = hass.data[DOMAIN][DATA_CONFIGS][host]
-
+        self.area_reg = await ar.async_get_registry(self.hass)
+        self.device_reg = await dr.async_get_registry(self.hass)
         # Configure the dynalite devices
-        self._dynalite_devices = DynaliteDevices(
-            config=self.config,
-            loop=hass.loop,
-            newDeviceFunc=self.addDevices,
-            updateDeviceFunc=self.updateDevice,
-        )
-        await self._dynalite_devices.async_setup()
-
+        await self.dynalite_devices.async_setup()
         for category in ENTITY_CATEGORIES:
-            hass.async_create_task(
-                hass.config_entries.async_forward_entry_setup(
+            self.hass.async_create_task(
+                self.hass.config_entries.async_forward_entry_setup(
                     self.config_entry, category
                 )
             )
-
         return True
 
     @callback
-    def addDevices(self, devices):
+    def add_devices(self, devices):
         """Call when devices should be added to home assistant."""
         added_entities = {}
         for category in ENTITY_CATEGORIES:
             added_entities[category] = []
 
         for device in devices:
-            entity = None
             category = device.category
             if category == "light":
                 entity = DynaliteLight(device, self)
@@ -105,7 +98,7 @@ class DynaliteBridge:
                 else:
                     entity = DynaliteCover(device, self)
             else:
-                LOGGER.warning("Illegal device category %s", category)
+                LOGGER.debug("Illegal device category %s", category)
                 continue
             added_entities[category].append(entity)
             self.all_entities[entity.unique_id] = entity
@@ -115,10 +108,11 @@ class DynaliteBridge:
                 self.add_entities_when_registered(category, added_entities[category])
 
     @callback
-    def updateDevice(self, device):
+    def update_device(self, device):
         """Call when a device or all devices should be updated."""
         if device == CONF_ALL:
-            if self._dynalite_devices.available:
+            # This is used to signal connection or disconnection, so all devices may become available or not.
+            if self.dynalite_devices.available:
                 LOGGER.info("Connected to dynalite host")
             else:
                 LOGGER.info("Disconnected from dynalite host")
@@ -169,15 +163,15 @@ class DynaliteBridge:
 
     async def entity_added_to_ha(self, entity):
         """Call when an entity is added to HA so we can set its area."""
-        areacreate = self.config[CONF_AREACREATE].lower()
-        if areacreate == CONF_AREA_CREATE_MANUAL:
+        areacreate = self.config.get(CONF_AREACREATE)
+        if areacreate and areacreate.lower() == CONF_AREACREATE_MANUAL:
             LOGGER.debug("area assignment set to manual - ignoring")
             return  # only need to update the areas if it is 'assign' or 'create'
-        if areacreate not in [CONF_AREA_CREATE_ASSIGN, CONF_AREA_CREATE_AUTO]:
+        if areacreate not in [CONF_AREACREATE_ASSIGN, CONF_AREACREATE_AUTO]:
             LOGGER.debug(
                 CONF_AREACREATE
                 + ' has unknown value of %s - assuming "'
-                + CONF_AREA_CREATE_MANUAL
+                + CONF_AREACREATE_MANUAL
                 + '" and ignoring',
                 areacreate,
             )
@@ -192,12 +186,12 @@ class DynaliteBridge:
                 return
             areaEntry = self.area_reg._async_is_registered(hassArea)
             if not areaEntry:
-                if areacreate != CONF_AREA_CREATE_AUTO:
+                if areacreate != CONF_AREACREATE_AUTO:
                     LOGGER.debug(
                         "Area %s not registered and "
                         + CONF_AREACREATE
                         + ' is not "'
-                        + CONF_AREA_CREATE_AUTO
+                        + CONF_AREACREATE_AUTO
                         + '" - ignoring',
                         hassArea,
                     )

@@ -16,9 +16,13 @@ class DynaliteBase:  # Deriving from Object so it doesn't override the entity (l
 
     def __init__(self, device, bridge):
         """Initialize the base class."""
-        self._listeners = []
         self._device = device
         self._bridge = bridge
+
+    @property
+    def device(self):
+        """Return the device - mostly for unit tests."""
+        return self._device
 
     @property
     def name(self):
@@ -73,14 +77,3 @@ class DynaliteBase:  # Deriving from Object so it doesn't override the entity (l
     def get_hass_area(self):
         """Return the area in HA that this entity should be placed in."""
         return self._device.get_master_area
-
-    @callback
-    def add_listener(self, listener):
-        """Add a listener for changes in state."""
-        self._listeners.append(listener)
-
-    @callback
-    def update_listeners(self):
-        """Update all listeners when state changes."""
-        for listener in self._listeners:
-            listener()
