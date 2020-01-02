@@ -14,18 +14,6 @@ group: !include groups.yaml
 automation: !include automations.yaml
 script: !include scripts.yaml
 
-homeassistant:
-  elevation: 61
-  latitude: 32.13520170307117
-  name: Home
-  longitude: 34.83580112457276
-  time_zone: Asia/Jerusalem
-  unit_system: metric
-  
-
-# hacs:
-    # token: 36935147a197055c12576acfe9f9f950f825ad87
-
 logger:
   default: info
   logs:
@@ -35,8 +23,8 @@ logger:
 
 dynalite:
   bridges:
-    - host: 10.0.0.200
-      port: 95
+    - host: GATEWAY IP ADDRESS
+      port: GATEWAY PORT
       autodiscover: true
       polltimer: 1
       areacreate: auto
@@ -168,39 +156,3 @@ dynalite:
       default:
         fade: 0
 
-# media_player:
-  # - platform: kodi
-    # host: 10.0.0.13
-    
-# heos:
-  # host: 10.0.0.221
-  
-# climate:
-  # - platform: coolmaster
-    # host: 10.0.0.20
-    # port: 10102
-    # supported_modes:
-      # - heat
-      # - cool
-      
-# panel_custom:
-  # - name: floorplan
-    # sidebar_title: Floorplan
-    # sidebar_icon: mdi:home
-    # url_path: floorplan
-    # config: !include floorplan.yaml
-    
-# frontend:
-  # extra_html_url:
-    # - /local/custom_ui/state-card-floorplan.html
-    
-# binary_sensor:
-  # - platform: mqtt
-    # state_topic: dummy/floorplan/sensor
-    # name: Floorplan
-    
-# homeassistant:
-  # customize:    
-    # binary_sensor.floorplan:
-      # custom_ui_state_card: state-card-floorplan
-      # config: !include floorplan.yaml
