@@ -15,7 +15,7 @@ Until somebody wants to integrate this into Home Assistant - you will need to do
 This is a messy one to configure because getting information out of Dynalite is near on impossible. You must know the configuration and topology of your network to be able to integrate with it - this isn't a "*plug and play*" scenario.
 
 ### Communication
-The host and port of the RS485 to IP gateway is defined at the root of the sensor config, along with the MQTT discovery topic and device topic.
+The host and port of the RS485 to IP gateway is defined as a bridge in configuration.yaml.
 ```yaml
 dynalite:
   bridges:
