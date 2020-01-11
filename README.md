@@ -127,7 +127,7 @@ The default fade time is configured via the `fade` tag in seconds.
 ### Channels
 Channels are optionally defined under `area`'s (as above) and are required to be defined in the root of the config under `channel`.
 
-Channels that do not have a name will receive a name "AREANAM Channel X"
+Channels that do not have a name will receive a name "AREANAME Channel X"
 
 Channels can have an optional argument `type` which can be 'light', 'switch', or 'cover', creating the corresponding entity in Home Assistant. If not defined, 'light' is assumed
 
