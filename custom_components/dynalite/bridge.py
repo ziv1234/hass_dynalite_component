@@ -57,7 +57,6 @@ class DynaliteBridge:
         # Configure the dynalite devices
         self.dynalite_devices = DynaliteDevices(
             config=self.config,
-            loop=hass.loop,
             newDeviceFunc=self.add_devices,
             updateDeviceFunc=self.update_device,
         )
