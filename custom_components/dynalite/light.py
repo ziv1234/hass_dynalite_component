@@ -1,7 +1,7 @@
 """Support for Dynalite channels as lights."""
-from .dynalitebase import async_setup_channel_entry, DynaliteBase
-
 from homeassistant.components.light import SUPPORT_BRIGHTNESS, Light
+
+from .dynalitebase import DynaliteBase, async_setup_channel_entry
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):

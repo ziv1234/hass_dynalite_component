@@ -1,7 +1,7 @@
 """Support for the Dynalite channels as covers."""
 from homeassistant.components.cover import CoverDevice
 
-from .dynalitebase import async_setup_channel_entry, DynaliteBase
+from .dynalitebase import DynaliteBase, async_setup_channel_entry
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):

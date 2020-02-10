@@ -1,29 +1,21 @@
 """Code to handle a Dynalite bridge."""
-import pprint
 import asyncio
 
-from dynalite_devices_lib import DynaliteDevices, DOMAIN as DYNDOMAIN
+from dynalite_devices_lib import DOMAIN as DYNDOMAIN
+from dynalite_devices_lib import DynaliteDevices
 from dynalite_lib import CONF_ALL
 
-from homeassistant.core import callback
-from homeassistant.helpers import device_registry as dr, area_registry as ar
 from homeassistant.const import CONF_HOST
+from homeassistant.core import callback
+from homeassistant.helpers import area_registry as ar
+from homeassistant.helpers import device_registry as dr
 
-from .const import (
-    DOMAIN,
-    DATA_CONFIGS,
-    LOGGER,
-    CONF_AREACREATE,
-    CONF_AREACREATE_MANUAL,
-    CONF_AREACREATE_ASSIGN,
-    CONF_AREACREATE_AUTO,
-    ENTITY_CATEGORIES,
-)
-
-
+from .const import (CONF_AREACREATE, CONF_AREACREATE_ASSIGN,
+                    CONF_AREACREATE_AUTO, CONF_AREACREATE_MANUAL, DATA_CONFIGS,
+                    DOMAIN, ENTITY_CATEGORIES, LOGGER)
+from .cover import DynaliteCover, DynaliteCoverWithTilt
 from .light import DynaliteLight
 from .switch import DynaliteSwitch
-from .cover import DynaliteCover, DynaliteCoverWithTilt
 
 
 class BridgeError(Exception):
@@ -52,7 +44,7 @@ class DynaliteBridge:
         self.host = config_entry.data[CONF_HOST]
         if self.host not in hass.data[DOMAIN][DATA_CONFIGS]:
             LOGGER.info("invalid host - %s", self.host)
-            raise BridgeError("invalid host - " + self.host)
+            raise BridgeError(f"invalid host - {self.host}")
         self.config = hass.data[DOMAIN][DATA_CONFIGS][self.host]
         # Configure the dynalite devices
         self.dynalite_devices = DynaliteDevices(
@@ -63,9 +55,6 @@ class DynaliteBridge:
 
     async def async_setup(self, tries=0):
         """Set up a Dynalite bridge based on host parameter."""
-        LOGGER.debug(
-            "component bridge async_setup - %s" % pprint.pformat(self.config_entry.data)
-        )
         self.area_reg = await ar.async_get_registry(self.hass)
         self.device_reg = await dr.async_get_registry(self.hass)
         # Configure the dynalite devices

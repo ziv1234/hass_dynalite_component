@@ -1,6 +1,7 @@
 """Support for the Dynalite channels and presets as switches."""
-from .dynalitebase import async_setup_channel_entry, DynaliteBase
 from homeassistant.components.switch import SwitchDevice
+
+from .dynalitebase import DynaliteBase, async_setup_channel_entry
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):

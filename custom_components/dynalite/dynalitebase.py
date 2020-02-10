@@ -7,7 +7,7 @@ from .const import DOMAIN, LOGGER
 def async_setup_channel_entry(category, hass, config_entry, async_add_entities):
     """Record the async_add_entities function to add them later when received from Dynalite."""
     LOGGER.debug("async_setup_entry " + category + " entry = %s", config_entry.data)
-    bridge = hass.data[DOMAIN][config_entry.data["host"]]
+    bridge = hass.data[DOMAIN][config_entry.entry_id]
     bridge.register_add_entities(category, async_add_entities)
 
 
@@ -49,7 +49,6 @@ class DynaliteBase:  # Deriving from Object so it doesn't override the entity (l
         """Set whether this entity should be hidden from UI."""
         return self._device.set_hidden(hidden)
 
-    @callback
     async def async_update(self):
         """Update the entity."""
         return
