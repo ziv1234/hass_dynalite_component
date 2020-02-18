@@ -54,7 +54,7 @@ class DynaliteBridge:
         )
 
     async def async_setup(self, tries=0):
-        """Set up a Dynalite bridge based on host parameter."""
+        """Set up a Dynalite bridge."""
         self.area_reg = await ar.async_get_registry(self.hass)
         self.device_reg = await dr.async_get_registry(self.hass)
         # Configure the dynalite devices
