@@ -1,25 +1,24 @@
 """Support for Dynalite channels as lights."""
 from homeassistant.components.light import SUPPORT_BRIGHTNESS, Light
+from homeassistant.core import callback
 
-from .dynalitebase import DynaliteBase, async_setup_channel_entry
-
-
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Old way."""
-    pass
+from .dynalitebase import DynaliteBase, async_setup_entry_base
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Record the async_add_entities function to add them later when received from Dynalite."""
-    async_setup_channel_entry("light", hass, config_entry, async_add_entities)
+
+    @callback
+    def light_from_device(device, bridge):
+        return DynaliteLight(device, bridge)
+
+    async_setup_entry_base(
+        "light", hass, config_entry, async_add_entities, light_from_device
+    )
 
 
 class DynaliteLight(DynaliteBase, Light):
     """Representation of a Dynalite Channel as a Home Assistant Light."""
-
-    def __init__(self, device, bridge):
-        """Initialize the light."""
-        super().__init__(device, bridge)
 
     @property
     def brightness(self):

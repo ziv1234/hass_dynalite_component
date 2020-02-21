@@ -1,14 +1,28 @@
 """Support for the Dynalite devices as entities."""
 from homeassistant.core import callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from .const import DOMAIN, LOGGER
 
 
-def async_setup_channel_entry(category, hass, config_entry, async_add_entities):
+def async_setup_entry_base(
+    platform, hass, config_entry, async_add_entities, entity_from_device
+):
     """Record the async_add_entities function to add them later when received from Dynalite."""
-    LOGGER.debug("async_setup_entry " + category + " entry = %s", config_entry.data)
+    LOGGER.debug("Setting up %s entry = %s", platform, config_entry.data)
     bridge = hass.data[DOMAIN][config_entry.entry_id]
-    bridge.register_add_entities(category, async_add_entities)
+
+    @callback
+    def async_add_entities_platform(devices):
+        # assumes it is called with a single platform
+        added_entities = []
+        for device in devices:
+            if device.category == platform:
+                added_entities.append(entity_from_device(device, bridge))
+        if added_entities:
+            async_add_entities(added_entities)
+
+    bridge.register_add_devices(platform, async_add_entities_platform)
 
 
 class DynaliteBase:  # Deriving from Object so it doesn't override the entity (light, switch, cover, etc.)
@@ -18,11 +32,6 @@ class DynaliteBase:  # Deriving from Object so it doesn't override the entity (l
         """Initialize the base class."""
         self._device = device
         self._bridge = bridge
-
-    @property
-    def device(self):
-        """Return the device - mostly for unit tests."""
-        return self._device
 
     @property
     def name(self):
@@ -39,16 +48,6 @@ class DynaliteBase:  # Deriving from Object so it doesn't override the entity (l
         """Return if entity is available."""
         return self._device.available
 
-    @property
-    def hidden(self):
-        """Return true if this entity should be hidden from UI."""
-        return self._device.hidden
-
-    @callback
-    def set_hidden(self, hidden):
-        """Set whether this entity should be hidden from UI."""
-        return self._device.set_hidden(hidden)
-
     async def async_update(self):
         """Update the entity."""
         return
@@ -56,20 +55,25 @@ class DynaliteBase:  # Deriving from Object so it doesn't override the entity (l
     @property
     def device_info(self):
         """Device info for this entity."""
-        return self._device.device_info
-
-    @callback
-    def try_schedule_ha(self):
-        """Schedule update HA state if configured."""
-        if (
-            self.hass
-        ):  # if it was not added yet to ha, need to update. will be updated when added to ha
-            self.schedule_update_ha_state()
-        else:
-            LOGGER.debug("%s not ready - not updating" % self.name)
+        return {
+            "identifiers": {(DOMAIN, self.unique_id)},
+            "name": self.name,
+            "manufacturer": "Dynalite",
+        }
 
     async def async_added_to_hass(self):
-        """Bridge was added to HA."""
+        """Added to hass so need to register to dispatch."""
+        # register for device specific update
+        # pylint: disable=no-member
+        async_dispatcher_connect(
+            self.hass,
+            self._bridge.update_signal(self._device),
+            self.async_schedule_update_ha_state,
+        )
+        # register for wide update
+        async_dispatcher_connect(
+            self.hass, self._bridge.update_signal(), self.async_schedule_update_ha_state
+        )
         self.hass.async_create_task(self._bridge.entity_added_to_ha(self))
 
     @property

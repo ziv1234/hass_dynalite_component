@@ -1,25 +1,26 @@
 """Support for the Dynalite channels as covers."""
 from homeassistant.components.cover import CoverDevice
+from homeassistant.core import callback
 
-from .dynalitebase import DynaliteBase, async_setup_channel_entry
-
-
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Old way."""
-    pass
+from .dynalitebase import DynaliteBase, async_setup_entry_base
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Record the async_add_entities function to add them later when received from Dynalite."""
-    async_setup_channel_entry("cover", hass, config_entry, async_add_entities)
+
+    @callback
+    def cover_from_device(device, bridge):
+        if device.has_tilt:
+            return DynaliteCoverWithTilt(device, bridge)
+        return DynaliteCover(device, bridge)
+
+    async_setup_entry_base(
+        "cover", hass, config_entry, async_add_entities, cover_from_device
+    )
 
 
 class DynaliteCover(DynaliteBase, CoverDevice):
     """Representation of a Dynalite Channel as a Home Assistant Cover."""
-
-    def __init__(self, device, bridge):
-        """Initialize the cover."""
-        super().__init__(device, bridge)
 
     @property
     def device_class(self):
@@ -65,10 +66,6 @@ class DynaliteCover(DynaliteBase, CoverDevice):
 
 class DynaliteCoverWithTilt(DynaliteCover):
     """Representation of a Dynalite Channel as a Home Assistant Cover that uses up and down for tilt."""
-
-    def __init__(self, device, bridge):
-        """Initialize the cover."""
-        super().__init__(device, bridge)
 
     @property
     def current_cover_tilt_position(self):
