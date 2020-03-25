@@ -1,7 +1,6 @@
 ---
 title: "Philips Dynalite"
 description: "Instructions on setting up Philips Dynalite within Home Assistant."
-logo: dynalite.png
 ---
 
 Philips Dynalite support is integrated into Home Assistant as a hub that can drive the light platforms. 
