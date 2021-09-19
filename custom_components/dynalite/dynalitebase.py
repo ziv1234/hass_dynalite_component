@@ -1,11 +1,14 @@
 """Support for the Dynalite devices as entities."""
-from typing import Any, Callable, Dict
+from __future__ import annotations
 
-from .bridge import DynaliteBridge
+from typing import Any, Callable
+
+from homeassistant.components.dynalite.bridge import DynaliteBridge
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, LOGGER
 
@@ -13,7 +16,7 @@ from .const import DOMAIN, LOGGER
 def async_setup_entry_base(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: Callable,
+    async_add_entities: AddEntitiesCallback,
     platform: str,
     entity_from_device: Callable,
 ) -> None:
@@ -40,7 +43,7 @@ class DynaliteBase(Entity):
         """Initialize the base class."""
         self._device = device
         self._bridge = bridge
-        self._unsub_dispatchers = []
+        self._unsub_dispatchers: list[Callable[[], None]] = []
 
     @property
     def name(self) -> str:
@@ -55,25 +58,16 @@ class DynaliteBase(Entity):
     @property
     def available(self) -> bool:
         """Return if entity is available."""
-        device_available = self._device.available
-        if self._bridge.available and not device_available:
-            # this means that the device has been removed in reconfig
-            self.hass.async_create_task(self.async_remove())
-        return device_available
+        return self._device.available
 
     @property
-    def device_info(self) -> Dict[str, Any]:
+    def device_info(self) -> DeviceInfo:
         """Device info for this entity."""
         return {
             "identifiers": {(DOMAIN, self._device.unique_id)},
             "name": self.name,
             "manufacturer": "Dynalite",
         }
-
-    @property
-    def get_hass_area(self):
-        """Return the area in HA that this entity should be placed in."""
-        return self._device.get_master_area
 
     async def async_added_to_hass(self) -> None:
         """Added to hass so need to register to dispatch."""
@@ -93,7 +87,6 @@ class DynaliteBase(Entity):
                 self.async_schedule_update_ha_state,
             )
         )
-        self.hass.async_create_task(self._bridge.entity_added_to_ha(self))
 
     async def async_will_remove_from_hass(self) -> None:
         """Unregister signal dispatch listeners when being removed."""
