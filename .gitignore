@@ -4,3 +4,4 @@
 custom_components/dynalite/.vs/dynalite/v16/.suo
 custom_components/dynalite/.vs/VSWorkspaceState.json
 .coverage
+.mypy_cache

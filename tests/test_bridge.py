@@ -10,7 +10,6 @@ from dynalite_devices_lib.dynalite_devices import (
     NOTIFICATION_PRESET,
     DynaliteNotification,
 )
-
 from homeassistant.components import dynalite
 from homeassistant.components.dynalite.const import (
     ATTR_AREA,
@@ -19,10 +18,10 @@ from homeassistant.components.dynalite.const import (
     ATTR_PRESET,
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from .const import DOMAIN
+from .common import DOMAIN
+
 
 async def test_update_device(hass, enable_custom_integrations):
     """Test that update works."""

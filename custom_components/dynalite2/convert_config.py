@@ -5,7 +5,6 @@ from types import MappingProxyType
 from typing import Any
 
 from dynalite_devices_lib import const as dyn_const
-
 from homeassistant.const import (
     CONF_DEFAULT,
     CONF_HOST,

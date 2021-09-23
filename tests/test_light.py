@@ -1,14 +1,13 @@
 """Test Dynalite light."""
 
 from dynalite_devices_lib.light import DynaliteChannelLightDevice
-import pytest
-
 from homeassistant.components.light import SUPPORT_BRIGHTNESS
 from homeassistant.const import (
     ATTR_FRIENDLY_NAME,
     ATTR_SUPPORTED_FEATURES,
     STATE_UNAVAILABLE,
 )
+import pytest
 
 from .common import (
     ATTR_METHOD,

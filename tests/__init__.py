@@ -1,1 +1,1 @@
-""" Package file"""
+"""Package file."""

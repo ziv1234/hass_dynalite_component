@@ -1,8 +1,7 @@
 """Test Dynalite cover."""
 from dynalite_devices_lib.cover import DynaliteTimeCoverWithTiltDevice
-import pytest
-
 from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_FRIENDLY_NAME
+import pytest
 
 from .common import (
     ATTR_ARGS,

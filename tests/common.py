@@ -4,10 +4,9 @@ from unittest.mock import AsyncMock, Mock, call, patch
 from homeassistant.components import dynalite
 from homeassistant.const import ATTR_SERVICE
 from homeassistant.helpers import entity_registry as er
-
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from .const import DOMAIN
+DOMAIN = "dynalite2"
 
 ATTR_METHOD = "method"
 ATTR_ARGS = "args"
@@ -37,9 +36,7 @@ async def create_entity_from_device(hass, device):
     host = "1.2.3.4"
     entry = MockConfigEntry(domain=DOMAIN, data={dynalite.CONF_HOST: host})
     entry.add_to_hass(hass)
-    with patch(
-        "custom_components.dynalite2.bridge.DynaliteDevices"
-    ) as mock_dyn_dev:
+    with patch("custom_components.dynalite2.bridge.DynaliteDevices") as mock_dyn_dev:
         mock_dyn_dev().async_setup = AsyncMock(return_value=True)
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()

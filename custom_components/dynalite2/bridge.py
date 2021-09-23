@@ -13,7 +13,6 @@ from dynalite_devices_lib.dynalite_devices import (
     DynaliteDevices,
     DynaliteNotification,
 )
-
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_send

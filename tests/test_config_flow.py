@@ -2,14 +2,13 @@
 
 from unittest.mock import AsyncMock, patch
 
-import pytest
-
 from homeassistant import config_entries
 from homeassistant.components import dynalite
-
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from .const import DOMAIN
+from .common import DOMAIN
+
 
 @pytest.mark.parametrize(
     "first_con, second_con,exp_type, exp_result, exp_reason",
@@ -19,7 +18,15 @@ from .const import DOMAIN
         (True, False, "create_entry", config_entries.ConfigEntryState.SETUP_RETRY, ""),
     ],
 )
-async def test_flow(hass, enable_custom_integrations, first_con, second_con, exp_type, exp_result, exp_reason):
+async def test_flow(
+    hass,
+    enable_custom_integrations,
+    first_con,
+    second_con,
+    exp_type,
+    exp_result,
+    exp_reason,
+):
     """Run a flow with or without errors and return result."""
     host = "1.2.3.4"
     with patch(
@@ -69,9 +76,7 @@ async def test_existing_update(hass, enable_custom_integrations):
         version=2,
     )
     entry.add_to_hass(hass)
-    with patch(
-        "custom_components.dynalite2.bridge.DynaliteDevices"
-    ) as mock_dyn_dev:
+    with patch("custom_components.dynalite2.bridge.DynaliteDevices") as mock_dyn_dev:
         mock_dyn_dev().async_setup = AsyncMock(return_value=True)
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -126,8 +131,7 @@ async def test_user_flow(hass, enable_custom_integrations):
         return_value=True,
     ):
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            {dynalite.CONF_HOST: host, dynalite.CONF_PORT: port},
+            result["flow_id"], {dynalite.CONF_HOST: host, dynalite.CONF_PORT: port},
         )
 
     assert result["type"] == "create_entry"
@@ -152,8 +156,7 @@ async def test_user_flow_cannot_connect(hass, enable_custom_integrations):
         return_value=False,
     ):
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            {dynalite.CONF_HOST: host, dynalite.CONF_PORT: port},
+            result["flow_id"], {dynalite.CONF_HOST: host, dynalite.CONF_PORT: port},
         )
 
     assert result["type"] == "form"
@@ -177,8 +180,7 @@ async def test_user_flow_generic_exception(hass, enable_custom_integrations):
         side_effect=Exception,
     ):
         result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            {dynalite.CONF_HOST: host, dynalite.CONF_PORT: port},
+            result["flow_id"], {dynalite.CONF_HOST: host, dynalite.CONF_PORT: port},
         )
 
     assert result["type"] == "form"

@@ -1,9 +1,8 @@
 """Test Dynalite switch."""
 
 from dynalite_devices_lib.switch import DynalitePresetSwitchDevice
-import pytest
-
 from homeassistant.const import ATTR_FRIENDLY_NAME
+import pytest
 
 from .common import (
     ATTR_METHOD,
