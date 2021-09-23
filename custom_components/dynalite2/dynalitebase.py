@@ -3,13 +3,13 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from homeassistant.components.dynalite.bridge import DynaliteBridge
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .bridge import DynaliteBridge
 from .const import DOMAIN, LOGGER
 
 
