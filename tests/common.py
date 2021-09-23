@@ -5,7 +5,7 @@ from homeassistant.components import dynalite
 from homeassistant.const import ATTR_SERVICE
 from homeassistant.helpers import entity_registry as er
 
-from tests.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .const import DOMAIN
 

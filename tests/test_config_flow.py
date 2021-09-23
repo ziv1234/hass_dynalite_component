@@ -7,7 +7,7 @@ import pytest
 from homeassistant import config_entries
 from homeassistant.components import dynalite
 
-from tests.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .const import DOMAIN
 

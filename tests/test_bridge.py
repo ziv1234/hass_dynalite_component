@@ -20,7 +20,7 @@ from homeassistant.components.dynalite.const import (
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from tests.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .const import DOMAIN
 

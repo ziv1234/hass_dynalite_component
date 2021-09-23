@@ -1,10 +1,11 @@
 {
-  "domain": "dynalite2",
-  "name": "Philips Dynalite Custom Component",
-  "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/dynalite",
   "codeowners": ["@ziv1234"],
-  "requirements": ["dynalite_devices==0.1.46"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/dynalite",
+  "domain": "dynalite2",
   "iot_class": "local_push",
+  "name": "Philips Dynalite Custom Component",
+  "requirements": ["dynalite_devices==0.1.46"],
   "version": "1.0.0"
 }
